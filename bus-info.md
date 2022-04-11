@@ -41,7 +41,7 @@ http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKey=1234567890&rou
 
 ![image](https://user-images.githubusercontent.com/52392004/162732645-d93c1f5d-dc1b-4ef6-9c93-6a483cd8fdda.png)
 
-여기에서 버스번호(routeName)은 1100번 입니다. 
+여기에서 버스번호(routeName)은 1100번 임을 확인할 수 있습니다. 
 
 ![image](https://user-images.githubusercontent.com/52392004/162732910-1f44e6b4-f3c1-4bb8-9df1-cde23c2c4da1.png)
 
