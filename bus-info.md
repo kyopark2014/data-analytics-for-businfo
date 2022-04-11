@@ -5,6 +5,8 @@
 
 ## 경기버스 API
 
+### 정류장 ID 확인 
+
 [경기버스정보](http://www.gbis.go.kr/gbis2014/publicService.action?cmd=mBusArrivalStation)에서 버스에 대한 정보를 조회 할 수 있습니다.
 
 센터필드 정류장에 대한 조회 동작은 아래와 같습니다. 
@@ -17,14 +19,31 @@ http://openapi.gbis.go.kr/ws/rest/busstationservice?serviceKey=1234567890&keywor
 
 ![image](https://user-images.githubusercontent.com/52392004/162731202-df75f3ec-aa99-4d82-ac2e-e42fcf86a86b.png)
 
+### 버스 도착 정보의 확인 
+
 센터필드역에 대한 버스 도착정보는 아래와 같이 확인이 가능합니다. 
 
 http://openapi.gbis.go.kr/ws/rest/busarrivalservice/station?serviceKey=1234567890&stationId=122000202
 
 ![image](https://user-images.githubusercontent.com/52392004/162731386-b14e976f-457d-4743-a895-c275b882725c.png)
 
-이때의 table에 대한 정보는 아래와 같습니다.
+이때의 table에 대한 정보는 아래와 같습니다. routeId 222000074인 버스 "경기74아3249"가 예상도착시간(predictTime)이 7분이며, 현재 43개의 남은 좌석의 수가(remainSeatCnt)임을 알 수 있습니다. 
 
 ![image](https://user-images.githubusercontent.com/52392004/162731466-f5a09ff9-bb7b-447d-ab6d-34f918214a44.png)
 
-여기서 reouteId 222000075에 대한가  
+### 버스 번호 확인
+
+routeId 222000074에 대한 버스 번호는 아래 API로 확인합니다. 
+
+[버스노선항목조회](http://www.gbis.go.kr/gbis2014/publicService.action?cmd=mBusRouteInfo)에 따라 routeID가 222000075에 대해 버스번호를 확인합니다.
+
+http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKey=1234567890&routeId=222000074
+
+![image](https://user-images.githubusercontent.com/52392004/162732645-d93c1f5d-dc1b-4ef6-9c93-6a483cd8fdda.png)
+
+여기에서 버스번호(routeName)은 1100번 입니다. 
+
+![image](https://user-images.githubusercontent.com/52392004/162732910-1f44e6b4-f3c1-4bb8-9df1-cde23c2c4da1.png)
+
+routeID: 222000075에 대한 버스번호 확인ㅂㅓ스
+routeID: 222000075에 대한 버스번호 확인
