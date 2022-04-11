@@ -45,5 +45,5 @@ http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKey=1234567890&rou
 
 ![image](https://user-images.githubusercontent.com/52392004/162732910-1f44e6b4-f3c1-4bb8-9df1-cde23c2c4da1.png)
 
-routeID: 222000075에 대한 버스번호 확인ㅂㅓ스
-routeID: 222000075에 대한 버스번호 확인
+
+### 벗 
