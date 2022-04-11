@@ -35,7 +35,7 @@ http://openapi.gbis.go.kr/ws/rest/busarrivalservice/station?serviceKey=123456789
 
 routeId 222000074에 대한 버스 번호는 아래 API로 확인합니다. 
 
-[버스노선항목조회](http://www.gbis.go.kr/gbis2014/publicService.action?cmd=mBusRouteInfo)에 따라 routeID가 222000075에 대해 버스번호를 확인합니다.
+[버스노선항목조회](http://www.gbis.go.kr/gbis2014/publicService.action?cmd=mBusRouteInfo)에 따라 routeID가 222000074에 대해 버스번호를 확인합니다.
 
 http://openapi.gbis.go.kr/ws/rest/busrouteservice/info?serviceKey=1234567890&routeId=222000074
 
