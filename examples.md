@@ -30,19 +30,14 @@ EVENT 정보는 아래와 같습니다.
 ```java
     console.log('event: '+JSON.stringify((event)));
     
-    for(let i=0;i<event["Records"].length;i++) {
-        const recode = event["Records"][i];
-        console.log('recode: '+JSON.stringify(recode));
-        
-        const data = recode['kinesis']['data'];
-        console.log('data: '+JSON.stringify(data));
-        
+    let records = event["Records"];
+    records.forEach((record) => {
+        const data = record['kinesis']['data'];
         let body = Buffer.from(data, 'base64');
-        console.log('body: '+body);
         
         const eventInfo = JSON.parse(body);
-        console.log('info: '+JSON.stringify((eventInfo)));
-    }
+        console.log('infoj: %j', eventInfo);
+    });
 ```
 
 decording후 결과는 아래와 같습니다. 
