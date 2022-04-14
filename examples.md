@@ -1,4 +1,4 @@
-## KINESIS stream
+## Kinesis Data Stream의 Sample 데이터
 
 EVENT 정보는 아래와 같습니다. 
 
