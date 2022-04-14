@@ -51,7 +51,7 @@ http://openapi.gbis.go.kr/ws/rest/busarrivalservice?serviceKey=1234567890&statio
 
 ```java
     const rule = new events.Rule(this, 'Cron', {
-      description: "Schedule a Lambda to save arrival time of buses",
+      description: "Lambda to save arrival time of buses",
       schedule: events.Schedule.expression('rate(1 minute)'),
     }); 
     rule.addTarget(new targets.LambdaFunction(lambdaBusInfo));
