@@ -19,7 +19,7 @@
 
 주요 사용 시나리오는 아래와 같습니다.
 
-1. Cronjob 형태로 Lambda가 Centerfied 버스정류장에 도착하는 버스정보를 정기적으로 조회하여 DynamoDB에 저장합니다.
+1. Cron job 형태로 Lambda가 Centerfied 버스정류장에 도착하는 버스정보를 정기적으로 조회하여 DynamoDB에 저장합니다.
 
 2. DynomoDB에 Write되는 이벤트를 Kinesis Data Stream으로 전달합니다.
 
@@ -47,7 +47,7 @@ http://openapi.gbis.go.kr/ws/rest/busarrivalservice?serviceKey=1234567890&statio
 
 ## 주기적인 버스 정보 수집
 
-Amazon CDK에서 아래와 같이 정의한 event rule에 의해 1분 단위로 버스 도착 정보를 열람할 수 있도록 [Lambda for businfo](https://github.com/kyopark2014/kinesis-data-stream/tree/main/cdk/repositories/get-businfo)을 호출 합니다.  
+[Amazon CDK에서 아래와 같이 정의한 event rule](https://github.com/kyopark2014/kinesis-data-stream/blob/main/cdk/lib/cdk-stack.ts)에 의해 1분 단위로 버스 도착 정보를 열람할 수 있도록 [Lambda for businfo](https://github.com/kyopark2014/kinesis-data-stream/tree/main/cdk/repositories/get-businfo)을 호출 합니다.  
 
 ```java
     const rule = new events.Rule(this, 'Cron', {
