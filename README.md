@@ -10,6 +10,23 @@
 
 센터필드 정류장에는 다양한 버스들이 도착하는데, 이 버스들을 타기 위해 탑승객들이 얼마나 기다리는지 알고 싶다는 요구가 있다고 가정하고 상기 문제를 Amazon Lambda Cronjob, Amazon Kinesis Data Stream을 통해 구현하고자 합니다. 여기서는 버스를 기다리는 평균 시간을 계산하고자 하므로, 일정시간(예: 10초) 간격으로 버스를 타려는 탑승객들이 오고, 이 시점에 버스 도착 예정시간이 버스 도착시간으로 가정하였습니다. 센터필드 정류장이 있는 톄혜란로는 트래픽이 매우 심하므로, 버스 도착 예정시간과 실제 도착시간은 다를 수 있습니다. 이것은 추후 ML을 통해 추론하는 별도 프로젝트로 진행합니다. 
 
+## Architecture 구성 
+
+전체적인 구현 Architecture는 아래와 같습니다.
+
+![image](https://user-images.githubusercontent.com/52392004/162723697-f807b59b-2577-4a0a-90be-6477f7d2953c.png)
+
+주요 사용 시나리오는 아래와 같습니다.
+
+1. Cronjob 형태로 Lambda가 Centerfied 버스정류장에 도착하는 버스정보를 정기적으로 조회하여 DynamoDB에 저장합니다.
+
+2. DynomoDB에 Write되는 이벤트를 Kinesis Data Stream으로 전달합니다.
+
+3. Kinesis Data Stream이 Queue형태로 저장한 데이터를 Kinesis Firehose가 S3에 저장합니다.
+
+4. S3에 저장된 데이터는 Amazon QuickSight를 통해 원하는 데이터를 화면에 보여줍니다.
+
+
 ## 데이터 입력 
 
 여기서는 정기적으로 데이터가 들어오는 상황을 만들기 위하여, 경기버스 노선정보를 정기적으로 조회하여 Amazon DynamoDB에 저장하고자 합니다. [버스정보조회](https://github.com/kyopark2014/kinesis-data-stream/blob/main/bus-info.md) 에서 확인한 정류장 정보를 활용하여 아래에 대한 정보를 조회하고자 합니다.  
@@ -28,6 +45,3 @@ http://openapi.gbis.go.kr/ws/rest/busarrivalservice?serviceKey=1234567890&statio
 ![image](https://user-images.githubusercontent.com/52392004/162734910-16d8b31f-3ffd-428d-85d4-ce63a818c040.png)
 
 
-
-
-![image](https://user-images.githubusercontent.com/52392004/162723697-f807b59b-2577-4a0a-90be-6477f7d2953c.png)
