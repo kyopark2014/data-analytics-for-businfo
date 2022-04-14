@@ -45,4 +45,8 @@ http://openapi.gbis.go.kr/ws/rest/busarrivalservice?serviceKey=1234567890&statio
 
 ![image](https://user-images.githubusercontent.com/52392004/162734910-16d8b31f-3ffd-428d-85d4-ce63a818c040.png)
 
+## [Lambda for Kinesis](https://github.com/kyopark2014/kinesis-data-stream/blob/main/lambda-kinesis.md)
+
+Kinesis의 fan out을 이용하여 Lambda for Kinesis에서 event를 parsing 합니다. 
+
 
