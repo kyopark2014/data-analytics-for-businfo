@@ -31,13 +31,14 @@ EVENT 정보는 아래와 같습니다.
     console.log('event: '+JSON.stringify((event)));
     
     let records = event["Records"];
+    let eventInfo = [];
     records.forEach((record) => {
-        const data = record['kinesis']['data'];
-        let body = Buffer.from(data, 'base64');
+        let body = Buffer.from(record['kinesis']['data'], 'base64');
         
-        const eventInfo = JSON.parse(body);
-        console.log('infoj: %j', eventInfo);
+        eventInfo.push(JSON.parse(body));
     });
+    
+    console.log('eventInfo: %j', eventInfo);    
 ```
 
 decording후 결과는 아래와 같습니다. 
