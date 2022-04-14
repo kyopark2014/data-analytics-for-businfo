@@ -28,7 +28,7 @@
 4. S3에 저장된 데이터는 Amazon QuickSight를 통해 원하는 데이터를 화면에 보여줍니다.
 
 
-## 데이터 입력 
+## 버스 도착 정보 조회
 
 여기서는 정기적으로 데이터가 들어오는 상황을 만들기 위하여, 경기버스 노선정보를 정기적으로 조회하여 Amazon DynamoDB에 저장하고자 합니다. [버스정보조회](https://github.com/kyopark2014/kinesis-data-stream/blob/main/bus-info.md) 에서 확인한 정류장 정보를 활용하여 아래에 대한 정보를 조회하고자 합니다.  
 
@@ -44,6 +44,19 @@ http://openapi.gbis.go.kr/ws/rest/busarrivalservice?serviceKey=1234567890&statio
 상기 API를 통해 "경기74아3257" 버스가 12분후에 도착예정이며, 현재 43개의 좌석이 비어 있음을 알 수 있습니다. 
 
 ![image](https://user-images.githubusercontent.com/52392004/162734910-16d8b31f-3ffd-428d-85d4-ce63a818c040.png)
+
+## 주기적인 버스 정보 수집
+
+Amazon CDK에서 아래와 같이 정의한 event rule에 의해 1분 단위로 버스 도착 정보를 열람할 수 있도록 [Lambda for businfo](https://github.com/kyopark2014/kinesis-data-stream/tree/main/cdk/repositories/get-businfo)을 호출 합니다.  
+
+```java
+    const rule = new events.Rule(this, 'Cron', {
+      description: "Schedule a Lambda to save arrival time of buses",
+      schedule: events.Schedule.expression('rate(1 minute)'),
+    }); 
+    rule.addTarget(new targets.LambdaFunction(lambdaBusInfo));
+```
+    
 
 ## [Lambda for Kinesis](https://github.com/kyopark2014/kinesis-data-stream/blob/main/lambda-kinesis.md)
 
