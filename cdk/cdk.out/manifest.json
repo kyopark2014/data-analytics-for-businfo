@@ -1,0 +1,186 @@
+{
+  "version": "16.0.0",
+  "artifacts": {
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    },
+    "CdkStack.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "CdkStack.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "CdkStack": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://unknown-account/unknown-region",
+      "properties": {
+        "templateFile": "CdkStack.template.json",
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/be879e914d5c38d1971b9f25e390ea093e66571d2db0a50c3b4130ebb1dec91b.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "CdkStack.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-${AWS::Region}",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "CdkStack.assets"
+      ],
+      "metadata": {
+        "/CdkStack/cdk-businfo/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "cdkbusinfo2C2CF86C"
+          }
+        ],
+        "/CdkStack/cdk-businfo/Policy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "cdkbusinfoPolicy3C8DD22A"
+          }
+        ],
+        "/CdkStack/cdk-businfo/AutoDeleteObjectsCustomResource/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "cdkbusinfoAutoDeleteObjectsCustomResource10187216"
+          }
+        ],
+        "/CdkStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+          }
+        ],
+        "/CdkStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F"
+          }
+        ],
+        "/CdkStack/bucketName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "bucketName"
+          }
+        ],
+        "/CdkStack/Stream/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "Stream790BDEE4"
+          }
+        ],
+        "/CdkStack/AwsCdkKinesisEncryptedStreamsUnsupportedRegions": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AwsCdkKinesisEncryptedStreamsUnsupportedRegions"
+          }
+        ],
+        "/CdkStack/dynamodb-businfo": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "dynamodbbusinfo7FC290DB"
+            }
+          }
+        ],
+        "/CdkStack/dynamodb-businfo/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "dynamodbbusinfo7FC290DB"
+          }
+        ],
+        "/CdkStack/KinesisInfo/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "KinesisInfoServiceRoleD1C59497"
+          }
+        ],
+        "/CdkStack/KinesisInfo/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "KinesisInfoServiceRoleDefaultPolicy5F52CFDF"
+          }
+        ],
+        "/CdkStack/KinesisInfo/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "KinesisInfoB4619679"
+          }
+        ],
+        "/CdkStack/KinesisInfo/KinesisEventSource:CdkStackStream937EB6F0/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "KinesisInfoKinesisEventSourceCdkStackStream937EB6F065BBFCF4"
+          }
+        ],
+        "/CdkStack/LambdaBusInfo/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LambdaBusInfoServiceRole087CB63A"
+          }
+        ],
+        "/CdkStack/LambdaBusInfo/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LambdaBusInfoServiceRoleDefaultPolicyBD52A92C"
+          }
+        ],
+        "/CdkStack/LambdaBusInfo/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LambdaBusInfo148F31F9"
+          }
+        ],
+        "/CdkStack/Cron/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CronA79E22A9"
+          }
+        ],
+        "/CdkStack/Cron/AllowEventRuleCdkStackLambdaBusInfo6DA6B5A8": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CronAllowEventRuleCdkStackLambdaBusInfo6DA6B5A8B73586AA"
+          }
+        ],
+        "/CdkStack/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/CdkStack/CDKMetadata/Condition": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadataAvailable"
+          }
+        ],
+        "/CdkStack/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/CdkStack/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "CdkStack"
+    }
+  }
+}
