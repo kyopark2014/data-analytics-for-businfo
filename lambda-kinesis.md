@@ -27,12 +27,6 @@ Kinesis stream은 DynamoDB의 변경 event를 아래와 같은 포맷으로 받�
 }
 ```
 
-## Repository
-
-Lambda for Kinesis의 소스코드는 cdk의 repository에 있으며 URL은 아래와 같습니다. 
-
-https://github.com/kyopark2014/kinesis-data-stream/tree/main/cdk/repositories/get-kinesisinfo
-
 ## Event parsing
 
 Kinesis stream에서 전달하는 event에서 data를 추출하여 아래와 같이 base64로 decoding 합니다.
@@ -93,3 +87,9 @@ decording후 결과는 아래와 같습니다.
     "eventSource": "aws:dynamodb"
 }
 ```
+
+## Repository
+
+Lambda for Kinesis의 소스코드는 cdk의 repository에 있으며 URL은 아래와 같습니다. 
+
+https://github.com/kyopark2014/kinesis-data-stream/tree/main/cdk/repositories/get-kinesisinfo
