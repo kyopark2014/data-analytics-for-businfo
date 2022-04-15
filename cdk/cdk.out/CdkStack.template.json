@@ -183,6 +183,133 @@
         "aws:cdk:path": "CdkStack/Stream/Resource"
       }
     },
+    "FirehoseRoleAA67C190": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "firehose.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "kinesis:DescribeStream",
+                    "kinesis:DescribeStreamSummary",
+                    "kinesis:GetRecords",
+                    "kinesis:GetShardIterator",
+                    "kinesis:ListShards",
+                    "kinesis:SubscribeToShard"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "Stream790BDEE4",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Action": [
+                    "s3:GetObject*",
+                    "s3:GetBucket*",
+                    "s3:List*",
+                    "s3:DeleteObject*",
+                    "s3:PutObject*",
+                    "s3:Abort*"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "cdkbusinfo2C2CF86C",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          {
+                            "Fn::GetAtt": [
+                              "cdkbusinfo2C2CF86C",
+                              "Arn"
+                            ]
+                          },
+                          "/*"
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "Version": "2012-10-17"
+            },
+            "PolicyName": "allow-s3-kinesis-logs"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "CdkStack/FirehoseRole/Resource"
+      }
+    },
+    "FirehoseDeliveryStream": {
+      "Type": "AWS::KinesisFirehose::DeliveryStream",
+      "Properties": {
+        "DeliveryStreamType": "KinesisStreamAsSource",
+        "KinesisStreamSourceConfiguration": {
+          "KinesisStreamARN": {
+            "Fn::GetAtt": [
+              "Stream790BDEE4",
+              "Arn"
+            ]
+          },
+          "RoleARN": {
+            "Fn::GetAtt": [
+              "FirehoseRoleAA67C190",
+              "Arn"
+            ]
+          }
+        },
+        "S3DestinationConfiguration": {
+          "BucketARN": {
+            "Fn::GetAtt": [
+              "cdkbusinfo2C2CF86C",
+              "Arn"
+            ]
+          },
+          "BufferingHints": {
+            "IntervalInSeconds": 60,
+            "SizeInMBs": 5
+          },
+          "CompressionFormat": "UNCOMPRESSED",
+          "EncryptionConfiguration": {
+            "NoEncryptionConfig": "NoEncryption"
+          },
+          "ErrorOutputPrefix": "eror/",
+          "Prefix": "businfo/",
+          "RoleARN": {
+            "Fn::GetAtt": [
+              "FirehoseRoleAA67C190",
+              "Arn"
+            ]
+          }
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "CdkStack/FirehoseDeliveryStream"
+      }
+    },
     "dynamodbbusinfo7FC290DB": {
       "Type": "AWS::DynamoDB::Table",
       "Properties": {
@@ -516,7 +643,7 @@
     "CDKMetadata": {
       "Type": "AWS::CDK::Metadata",
       "Properties": {
-        "Analytics": "v2:deflate64:H4sIAAAAAAAA/21RTU/DMAz9Ldyz8DEhzqxiN0TVcZ/SxExem6SKk6Kpyn8nH2UTEqf37Bc/O/YTf3zhD3fimzZSDZsRe74cvJADS6njQlu+7IIcwLPmy6ysQmtHlJdbeo1rsBMEkQ1ogJCyowOh89vKIlMXI7RVqdun6EfIUiGRjUL3SvBlH4z0aE2WrvxtBuMPNjgJ72Ka0Jyy/H+2BaeRKJVFhkLzpbO1UcHb+JVFRtujIAJP/DUDg+yahu/CWpYwRtYE8lZ3QKVfEa78j9Q6O6MCx4pdWuppHewj+CmUhTbWKCwf+y2KzFgF/Ez3czrMczrNmRA3LhiPGnhX8QfJfV2StgEAAA=="
+        "Analytics": "v2:deflate64:H4sIAAAAAAAA/21Ry07DMBD8Fu6OeVSIMw1wQ0Qp98qJt2Wb2I68dlAU+d+xnZAKidPM7njH+3jg90/87kZ8U9HKruix4fPBibZjMXWcacfnvW87cKw86ZUtUJke2+maXuMl2AuCwDrUQEjJ0YJQ6e3CAkOh+FybHlIy49VvYVv5CS18GQIepRfocQQ7rYZy0kIZGXv+FM3ilUlgvVCNFHx+87p1aHSSNv46gnYH420L72IYUJ+T/H+2AquQKJYFRrujIAJH/DkBg1QRx6v9OkfEEFjpyRlVA2WvLGz8j1RZM6IEy7JdXPt5/fTDu8HnlZdGS8xN/xYFpo0EfqHbMZ7uMR7vQoiF9dqhAl4v+AMpSHHu2AEAAA=="
       },
       "Metadata": {
         "aws:cdk:path": "CdkStack/CDKMetadata/Default"
@@ -529,6 +656,24 @@
       "Description": "The nmae of bucket",
       "Value": {
         "Ref": "cdkbusinfo2C2CF86C"
+      }
+    },
+    "s3Arn": {
+      "Description": "The arn of s3",
+      "Value": {
+        "Fn::GetAtt": [
+          "cdkbusinfo2C2CF86C",
+          "Arn"
+        ]
+      }
+    },
+    "StreamARN": {
+      "Description": "The arn of kinesis stream",
+      "Value": {
+        "Fn::GetAtt": [
+          "Stream790BDEE4",
+          "Arn"
+        ]
       }
     }
   },

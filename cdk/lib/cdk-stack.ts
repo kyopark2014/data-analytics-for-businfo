@@ -7,8 +7,11 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
-import * as kinesis from 'aws-cdk-lib/aws-kinesis';
+import * as kinesisstream from 'aws-cdk-lib/aws-kinesis';
+import * as kinesisfirehose from 'aws-cdk-lib/aws-kinesisfirehose';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as cfn from 'aws-cdk-lib/aws-cloudformation';
 
 export class CdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -27,12 +30,121 @@ export class CdkStack extends Stack {
       description: 'The nmae of bucket',
     });
 
+    new cdk.CfnOutput(this, 's3Arn', {
+      value: s3Bucket.bucketArn,
+      description: 'The arn of s3',
+    });
+
     // kinesis data stream
-    const stream = new kinesis.Stream(this, 'Stream', {
+    const stream = new kinesisstream.Stream(this, 'Stream', {
       streamName: 'businfo',
       retentionPeriod: cdk.Duration.hours(48),
-      streamMode: kinesis.StreamMode.ON_DEMAND
+      streamMode: kinesisstream.StreamMode.ON_DEMAND
     });
+
+    new cdk.CfnOutput(this, 'StreamARN', {
+      value: stream.streamArn,
+      description: 'The arn of kinesis stream',
+    });
+
+    // using pre-defined metric method
+    stream.metricGetRecordsSuccess();
+    stream.metricPutRecordSuccess();
+
+    // kinesis firehose
+    const firehoseRole = new iam.Role(this, 'FirehoseRole', {
+      assumedBy: new iam.ServicePrincipal('firehose.amazonaws.com'),
+      inlinePolicies: {
+        'allow-s3-kinesis-logs': new iam.PolicyDocument({
+            statements: [
+              new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: [
+                  "kinesis:DescribeStream",
+                  "kinesis:DescribeStreamSummary",
+                  "kinesis:GetRecords",
+                  "kinesis:GetShardIterator",
+                  "kinesis:ListShards",
+                  "kinesis:SubscribeToShard"
+                ],
+                resources: [stream.streamArn]
+              }),
+              new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: [
+                  "s3:GetObject*",
+                  "s3:GetBucket*",
+                  "s3:List*",
+                  "s3:DeleteObject*",
+                  "s3:PutObject*",
+                  "s3:Abort*"
+                ],
+                resources: [
+                  s3Bucket.bucketArn,
+                      s3Bucket.bucketArn + "/*"
+                    ]
+                }),
+            /*  new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: [
+                  "logs:PutLogEvents"
+                ],
+                resources: [
+                  logGroup.logGroupArn
+                ]
+              }) */
+            ]
+          })
+        }    
+    });
+
+    const firehose = new kinesisfirehose.CfnDeliveryStream(this, 'FirehoseDeliveryStream', {
+      deliveryStreamType: 'KinesisStreamAsSource',
+      kinesisStreamSourceConfiguration: {
+        kinesisStreamArn: stream.streamArn,
+        roleArn: firehoseRole.roleArn,
+      },
+      s3DestinationConfiguration: {
+        bucketArn: s3Bucket.bucketArn,
+        bufferingHints: {
+          intervalInSeconds: 60,
+          sizeInMBs: 5
+        },
+        compressionFormat: 'UNCOMPRESSED',
+        encryptionConfiguration: {
+          noEncryptionConfig: "NoEncryption"
+        },
+        prefix: "businfo/",
+        errorOutputPrefix: 'eror/',
+        roleArn: firehoseRole.roleArn
+      }, 
+      //destinations: [new destinations.S3Bucket(bucket)], */
+    /*  extendedS3DestinationConfiguration: {
+        bucketArn: s3Bucket.bucketArn,
+        bufferingHints: {
+            intervalInSeconds: 60,
+            sizeInMBs: 128
+        },
+        compressionFormat: 'UNCOMPRESSED',
+        roleArn: firehoseRole.roleArn,
+        prefix: 'firehose/',
+        roleArn: '{ "Fn::GetAtt" : ["S3deliveryRole", "Arn"] }', 
+        processingConfiguration: {
+            enabled: true,
+            processors: [
+                {
+                    type: 'Lambda',
+                    parameters: [
+                        {
+                            parameterName: 'LambdaArn',
+                            parameterValue: props.lambda.functionArn
+                        }
+                    ]
+                }
+            ]
+        } 
+      }*/
+    });  
 
     // DynamoDB
     const tableName = 'dynamodb-businfo';

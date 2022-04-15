@@ -174,6 +174,14 @@
               "version": "2.17.0"
             }
           },
+          "s3Arn": {
+            "id": "s3Arn",
+            "path": "CdkStack/s3Arn",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.CfnOutput",
+              "version": "2.17.0"
+            }
+          },
           "Stream": {
             "id": "Stream",
             "path": "CdkStack/Stream",
@@ -219,6 +227,161 @@
             "path": "CdkStack/AwsCdkKinesisEncryptedStreamsUnsupportedRegions",
             "constructInfo": {
               "fqn": "aws-cdk-lib.CfnCondition",
+              "version": "2.17.0"
+            }
+          },
+          "StreamARN": {
+            "id": "StreamARN",
+            "path": "CdkStack/StreamARN",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.CfnOutput",
+              "version": "2.17.0"
+            }
+          },
+          "FirehoseRole": {
+            "id": "FirehoseRole",
+            "path": "CdkStack/FirehoseRole",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "CdkStack/FirehoseRole/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                  "aws:cdk:cloudformation:props": {
+                    "assumeRolePolicyDocument": {
+                      "Statement": [
+                        {
+                          "Action": "sts:AssumeRole",
+                          "Effect": "Allow",
+                          "Principal": {
+                            "Service": "firehose.amazonaws.com"
+                          }
+                        }
+                      ],
+                      "Version": "2012-10-17"
+                    },
+                    "policies": [
+                      {
+                        "policyName": "allow-s3-kinesis-logs",
+                        "policyDocument": {
+                          "Statement": [
+                            {
+                              "Action": [
+                                "kinesis:DescribeStream",
+                                "kinesis:DescribeStreamSummary",
+                                "kinesis:GetRecords",
+                                "kinesis:GetShardIterator",
+                                "kinesis:ListShards",
+                                "kinesis:SubscribeToShard"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": {
+                                "Fn::GetAtt": [
+                                  "Stream790BDEE4",
+                                  "Arn"
+                                ]
+                              }
+                            },
+                            {
+                              "Action": [
+                                "s3:GetObject*",
+                                "s3:GetBucket*",
+                                "s3:List*",
+                                "s3:DeleteObject*",
+                                "s3:PutObject*",
+                                "s3:Abort*"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": [
+                                {
+                                  "Fn::GetAtt": [
+                                    "cdkbusinfo2C2CF86C",
+                                    "Arn"
+                                  ]
+                                },
+                                {
+                                  "Fn::Join": [
+                                    "",
+                                    [
+                                      {
+                                        "Fn::GetAtt": [
+                                          "cdkbusinfo2C2CF86C",
+                                          "Arn"
+                                        ]
+                                      },
+                                      "/*"
+                                    ]
+                                  ]
+                                }
+                              ]
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                  "version": "2.17.0"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_iam.Role",
+              "version": "2.17.0"
+            }
+          },
+          "FirehoseDeliveryStream": {
+            "id": "FirehoseDeliveryStream",
+            "path": "CdkStack/FirehoseDeliveryStream",
+            "attributes": {
+              "aws:cdk:cloudformation:type": "AWS::KinesisFirehose::DeliveryStream",
+              "aws:cdk:cloudformation:props": {
+                "deliveryStreamType": "KinesisStreamAsSource",
+                "kinesisStreamSourceConfiguration": {
+                  "kinesisStreamArn": {
+                    "Fn::GetAtt": [
+                      "Stream790BDEE4",
+                      "Arn"
+                    ]
+                  },
+                  "roleArn": {
+                    "Fn::GetAtt": [
+                      "FirehoseRoleAA67C190",
+                      "Arn"
+                    ]
+                  }
+                },
+                "s3DestinationConfiguration": {
+                  "bucketArn": {
+                    "Fn::GetAtt": [
+                      "cdkbusinfo2C2CF86C",
+                      "Arn"
+                    ]
+                  },
+                  "bufferingHints": {
+                    "intervalInSeconds": 60,
+                    "sizeInMBs": 5
+                  },
+                  "compressionFormat": "UNCOMPRESSED",
+                  "encryptionConfiguration": {
+                    "noEncryptionConfig": "NoEncryption"
+                  },
+                  "prefix": "businfo/",
+                  "errorOutputPrefix": "eror/",
+                  "roleArn": {
+                    "Fn::GetAtt": [
+                      "FirehoseRoleAA67C190",
+                      "Arn"
+                    ]
+                  }
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_kinesisfirehose.CfnDeliveryStream",
               "version": "2.17.0"
             }
           },

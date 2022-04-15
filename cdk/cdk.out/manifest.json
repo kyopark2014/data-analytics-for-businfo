@@ -23,7 +23,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/be879e914d5c38d1971b9f25e390ea093e66571d2db0a50c3b4130ebb1dec91b.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/76adc503d59b2a99594312d6af3d05406c8fb41a2dbf58ba838cf825608ad4bb.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -75,6 +75,12 @@
             "data": "bucketName"
           }
         ],
+        "/CdkStack/s3Arn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "s3Arn"
+          }
+        ],
         "/CdkStack/Stream/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -85,6 +91,24 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "AwsCdkKinesisEncryptedStreamsUnsupportedRegions"
+          }
+        ],
+        "/CdkStack/StreamARN": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "StreamARN"
+          }
+        ],
+        "/CdkStack/FirehoseRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "FirehoseRoleAA67C190"
+          }
+        ],
+        "/CdkStack/FirehoseDeliveryStream": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "FirehoseDeliveryStream"
           }
         ],
         "/CdkStack/dynamodb-businfo": [
