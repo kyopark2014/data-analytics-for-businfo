@@ -1,4 +1,4 @@
-# Data Inggestion using Kinesis Data Stream and Kinesis Firehose toward Amazon S3
+# Kinesis Stream 이용한 버스 정보 수집 
 
 본 github repository를 이용해 Amazon의 Kinesis Data Stream와 관련된 AWS 서비스에 대해 실제적인 사용방법을 전달하고자 합니다.
 
