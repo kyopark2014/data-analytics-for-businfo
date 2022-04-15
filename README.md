@@ -1,4 +1,4 @@
-# kinesis-data-stream
+# Data Inggestion using Kinesis Data Stream and Kinesis Firehose toward Amazon S3
 
 본 github repository를 이용해 Amazon의 Kinesis Data Stream와 관련된 AWS 서비스에 대해 실제적인 사용방법을 전달하고자 합니다.
 
