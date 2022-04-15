@@ -75,11 +75,6 @@ $ cdk destroy
 ```
 
 
-## Lambda for Kinesis
-
-Kinesis의 fan out을 이용하여 [Lambda for Kinesis](https://github.com/kyopark2014/kinesis-data-stream/blob/main/lambda-kinesis.md)에서 event를 parsing 합니다. 
-
-
 ## 저장된 데이터
 
 AWS CDK로 현재 인프라를 deploy시 아래와 같이 S3로 버스정보가 저장되는것을 확인 할 수 있습니다. 
