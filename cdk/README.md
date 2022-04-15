@@ -144,7 +144,7 @@ Lambda에서 주기적으로 버스정보를 읽어 올 수 있도록, 아래와
     rule.addTarget(new targets.LambdaFunction(lambdaBusInfo));
 ```
 
-때로는 Amazon Kinesis에서 stream을 직접 확인하고 싶을수 있습니다. 이를 위해 event로 stream을 로그로 찍는 Lambda를 하나 만들었고, 아래와 같이 Amazon CDK로 선언하여 사용할 수 있습니다. 
+때로는 Amazon Kinesis에서 stream을 직접 확인하고 싶을수 있습니다. 이를 위해, Amazon Kinesis Stream의 fan out을 이용하는데, [Lambda for Kinesis](https://github.com/kyopark2014/kinesis-data-stream/blob/main/lambda-kinesis.md)은 stream을 event로 받아서 parsing하여, 확인할 수 있도록 log로 저장합니다.
 
 ```java
     const lambdakinesis = new lambda.Function(this, "KinesisInfo", {
