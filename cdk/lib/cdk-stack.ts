@@ -110,7 +110,7 @@ export class CdkStack extends Stack {
           intervalInSeconds: 60,
           sizeInMBs: 5
         },
-        compressionFormat: 'UNCOMPRESSED',
+        compressionFormat: 'UNCOMPRESSED', // GZIP
         encryptionConfiguration: {
           noEncryptionConfig: "NoEncryption"
         },
