@@ -1,10 +1,8 @@
 # Kinesis Stream 이용한 버스 정보 수집 
 
-본 github repository를 이용해 Amazon의 Kinesis Data Stream와 관련된 AWS 서비스에 대해 실제적인 사용방법을 전달하고자 합니다.
+본 github repository은 버스 정보를 주기적으로 수집하여 Amazon Kinesis Data Stream과 Kinesis Firehose를 이용해 S3에 저장 후 분석하는 과정을 보여주고자 합니다. 
 
 ## 문제 정의
-
-데이터를 주기적으로 가져오는 동작을 예제로 보여주기 위하여 아래와 같은 문제를 설정하였습니다. 
 
 "센터필드 정류장에서 얼마나 오래 기다려야 버스를 탈 수 있을까?"
 
@@ -32,18 +30,10 @@
 
 여기서는 정기적으로 데이터가 들어오는 상황을 만들기 위하여, 경기버스 노선정보를 정기적으로 조회하여 Amazon DynamoDB에 저장하고자 합니다. [버스정보조회](https://github.com/kyopark2014/kinesis-data-stream/blob/main/bus-info.md) 에서 확인한 정류장 정보를 활용하여 아래에 대한 정보를 조회하고자 합니다.  
 
-- 센터필드 정류장: stationId=122000202
-- 검색하려는 노선 경로: routeId: routeID=222000074
-- 해당 노선에서 센터필드 정류장의 순번: staOrder=81
-- 노선번호: 1100
+데이터를 주기적으로 가져오기 동작을 예제로 보여주기 위하여 아래와 같은 문제를 설정하였습니다. 
 
-아래와 같이 검색할 수 있습니다. 
 
-http://openapi.gbis.go.kr/ws/rest/busarrivalservice?serviceKey=1234567890&stationId=122000202&routeId=222000074&staOrder=81
 
-상기 API를 통해 "경기74아3257" 버스가 12분후에 도착예정이며, 현재 43개의 좌석이 비어 있음을 알 수 있습니다. 
-
-![image](https://user-images.githubusercontent.com/52392004/162734910-16d8b31f-3ffd-428d-85d4-ce63a818c040.png)
 
 ## 주기적인 버스 정보 수집
 
