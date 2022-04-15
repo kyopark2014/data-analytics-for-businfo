@@ -1,4 +1,4 @@
-# Kinesis Stream을 이용한 버스 정보 수집 
+# Amazon Serverless를 이용한 실시간 버스 정보 수집 및 저장
 
 본 github repository은 버스 정보를 주기적으로 수집하여 Amazon Kinesis Data Stream과 Kinesis Firehose를 이용해 S3에 저장 후 분석하는 과정을 보여주고자 합니다. 
 
