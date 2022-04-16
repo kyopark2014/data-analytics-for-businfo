@@ -314,6 +314,11 @@
                                   ]
                                 }
                               ]
+                            },
+                            {
+                              "Action": "glue:*",
+                              "Effect": "Allow",
+                              "Resource": "*"
                             }
                           ],
                           "Version": "2012-10-17"
@@ -340,21 +345,7 @@
               "aws:cdk:cloudformation:type": "AWS::KinesisFirehose::DeliveryStream",
               "aws:cdk:cloudformation:props": {
                 "deliveryStreamType": "KinesisStreamAsSource",
-                "kinesisStreamSourceConfiguration": {
-                  "kinesisStreamArn": {
-                    "Fn::GetAtt": [
-                      "Stream790BDEE4",
-                      "Arn"
-                    ]
-                  },
-                  "roleArn": {
-                    "Fn::GetAtt": [
-                      "FirehoseRoleAA67C190",
-                      "Arn"
-                    ]
-                  }
-                },
-                "s3DestinationConfiguration": {
+                "extendedS3DestinationConfiguration": {
                   "bucketArn": {
                     "Fn::GetAtt": [
                       "cdkbusinfo2C2CF86C",
@@ -363,7 +354,7 @@
                   },
                   "bufferingHints": {
                     "intervalInSeconds": 60,
-                    "sizeInMBs": 5
+                    "sizeInMBs": 64
                   },
                   "compressionFormat": "UNCOMPRESSED",
                   "encryptionConfiguration": {
@@ -371,6 +362,20 @@
                   },
                   "prefix": "businfo/",
                   "errorOutputPrefix": "eror/",
+                  "roleArn": {
+                    "Fn::GetAtt": [
+                      "FirehoseRoleAA67C190",
+                      "Arn"
+                    ]
+                  }
+                },
+                "kinesisStreamSourceConfiguration": {
+                  "kinesisStreamArn": {
+                    "Fn::GetAtt": [
+                      "Stream790BDEE4",
+                      "Arn"
+                    ]
+                  },
                   "roleArn": {
                     "Fn::GetAtt": [
                       "FirehoseRoleAA67C190",

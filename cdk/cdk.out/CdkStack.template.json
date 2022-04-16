@@ -251,6 +251,11 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "Action": "glue:*",
+                  "Effect": "Allow",
+                  "Resource": "*"
                 }
               ],
               "Version": "2012-10-17"
@@ -267,21 +272,7 @@
       "Type": "AWS::KinesisFirehose::DeliveryStream",
       "Properties": {
         "DeliveryStreamType": "KinesisStreamAsSource",
-        "KinesisStreamSourceConfiguration": {
-          "KinesisStreamARN": {
-            "Fn::GetAtt": [
-              "Stream790BDEE4",
-              "Arn"
-            ]
-          },
-          "RoleARN": {
-            "Fn::GetAtt": [
-              "FirehoseRoleAA67C190",
-              "Arn"
-            ]
-          }
-        },
-        "S3DestinationConfiguration": {
+        "ExtendedS3DestinationConfiguration": {
           "BucketARN": {
             "Fn::GetAtt": [
               "cdkbusinfo2C2CF86C",
@@ -290,7 +281,7 @@
           },
           "BufferingHints": {
             "IntervalInSeconds": 60,
-            "SizeInMBs": 5
+            "SizeInMBs": 64
           },
           "CompressionFormat": "UNCOMPRESSED",
           "EncryptionConfiguration": {
@@ -298,6 +289,20 @@
           },
           "ErrorOutputPrefix": "eror/",
           "Prefix": "businfo/",
+          "RoleARN": {
+            "Fn::GetAtt": [
+              "FirehoseRoleAA67C190",
+              "Arn"
+            ]
+          }
+        },
+        "KinesisStreamSourceConfiguration": {
+          "KinesisStreamARN": {
+            "Fn::GetAtt": [
+              "Stream790BDEE4",
+              "Arn"
+            ]
+          },
           "RoleARN": {
             "Fn::GetAtt": [
               "FirehoseRoleAA67C190",

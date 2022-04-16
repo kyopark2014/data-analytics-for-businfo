@@ -51,7 +51,7 @@ export class CdkStack extends Stack {
     stream.metricGetRecordsSuccess();
     stream.metricPutRecordSuccess();
 
-    // kinesis firehose
+    // kinesis data firehose
     const firehoseRole = new iam.Role(this, 'FirehoseRole', {
       assumedBy: new iam.ServicePrincipal('firehose.amazonaws.com'),
       inlinePolicies: {
@@ -84,6 +84,13 @@ export class CdkStack extends Stack {
                       s3Bucket.bucketArn + "/*"
                     ]
                 }),
+                new iam.PolicyStatement({
+                  effect: iam.Effect.ALLOW,
+                  actions: [
+                    "glue:*",
+                  ],
+                  resources: ['*'],
+                }),
             /*  new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
                 actions: [
@@ -104,20 +111,46 @@ export class CdkStack extends Stack {
         kinesisStreamArn: stream.streamArn,
         roleArn: firehoseRole.roleArn,
       },
-      s3DestinationConfiguration: {
+      extendedS3DestinationConfiguration: {
         bucketArn: s3Bucket.bucketArn,
         bufferingHints: {
           intervalInSeconds: 60,
-          sizeInMBs: 5
+          sizeInMBs: 64    // mininum 64MBs at data format conversion 
         },
-        compressionFormat: 'UNCOMPRESSED', // GZIP
+        compressionFormat: 'UNCOMPRESSED', // GZIP, SNAPPY
         encryptionConfiguration: {
           noEncryptionConfig: "NoEncryption"
         },
         prefix: "businfo/",
         errorOutputPrefix: 'eror/',
-        roleArn: firehoseRole.roleArn
-      }, 
+        roleArn: firehoseRole.roleArn,
+      /*  dataFormatConversionConfiguration: {
+          enabled: true,
+          inputFormatConfiguration: {
+            deserializer: {
+              openXJsonSerDe: {
+                caseInsensitive: false,
+                // Add hive keywords (e.g. timestamp) if they are added to events schema
+                columnToJsonKeyMappings: {},
+                convertDotsInJsonKeysToUnderscores: false,
+              },
+            },
+          },
+          outputFormatConfiguration: {
+            serializer: {
+              // Add parquet options if anything specific is required
+              parquetSerDe: {
+                compression: 'UNCOMPRESSED',
+              },
+            },
+          },
+          schemaConfiguration: {
+            databaseName: this.backendStack.glueStack.database.databaseName, // Target Glue database name
+            roleArn: this.deliveryStreamRole.roleArn,
+            tableName: this.backendStack.glueStack.eventsTable.tableName, // Target Glue table name
+          }, 
+        }, */
+      }
       //destinations: [new destinations.S3Bucket(bucket)], */
     /*  extendedS3DestinationConfiguration: {
         bucketArn: s3Bucket.bucketArn,
