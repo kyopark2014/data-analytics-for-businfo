@@ -1,20 +1,41 @@
 exports.handler = async (event) => {
     console.log('event: '+JSON.stringify((event)));
     
-    let records = event['Records'];
-    let eventInfo = [];
+    let records = event['records'];
+    let outRecords = [];
     records.forEach((record) => {
-        let body = Buffer.from(record['kinesis']['data'], 'base64');
-        
-        eventInfo.push(JSON.parse(body));
-    });
+        let recordId = record['recordId'];
+        let data = Buffer.from(record['data'], 'base64');
+ 
+        let body = JSON.parse(data);
+        let newimage = body['dynamodb']['NewImage'];
 
-    console.log('eventInfo: %j', eventInfo);
+        let timestamp = newimage['Timestamp']['S'];
+        let routeId = newimage['RouteId']['S'];
+        let remainSeatCnt = newimage['RemainSeatCnt']['S'];
+        let plateNo = newimage['PlateNo']['S'];
+        let predictTime = newimage['PredictTime']['S'];
+        
+        const converted = {
+            timestamp: timestamp,
+            routeId: routeId,
+            remainSeatCnt: remainSeatCnt,
+            plateNo: plateNo,
+            predictTime: predictTime
+        };
+        console.log('event: %j',converted);
+
+        let binary = Buffer.from(JSON.stringify(converted), 'utf8').toString('base64');
+        console.log('binary: '+binary);
+
+        const outRecord = {
+            recordId: recordId,
+            result: 'Ok',
+            data: binary
+        }
+        outRecords.push(outRecord); 
+    });
+    console.log('body: %j', {'records': outRecords});
     
-    // TODO implement
-    const response = {
-        statusCode: 200,
-        body: JSON.stringify(eventInfo),
-    };
-    return response;
+    return {'records': outRecords}
 };

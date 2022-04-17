@@ -70,10 +70,6 @@ export class CdkStack extends Stack {
         //timeToLiveAttribute: 'ttl',
         kinesisStream: stream,
     });
-  /*  dataTable.addGlobalSecondaryIndex({ // GSI
-      indexName: 'ContentID-index',
-      partitionKey: { name: 'ContentID', type: dynamodb.AttributeType.STRING },
-    }); */
 
     // Lambda - kinesisInfo
     const lambdakinesis = new lambda.Function(this, "LambdaKinesisStream", {
@@ -175,18 +171,6 @@ export class CdkStack extends Stack {
                 ],
                 resources: ['*'],
               }),
-            /*  new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "kinesis:DescribeStream",
-                  "kinesis:DescribeStreamSummary",
-                  "kinesis:GetRecords",
-                  "kinesis:GetShardIterator",
-                  "kinesis:ListShards",
-                  "kinesis:SubscribeToShard"
-                ],
-                resources: [stream.streamArn]
-              }), */
             ]
           })
       },
