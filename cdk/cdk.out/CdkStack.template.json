@@ -223,7 +223,7 @@
         "aws:cdk:path": "CdkStack/dynamodb-businfo/Resource"
       }
     },
-    "KinesisInfoServiceRoleD1C59497": {
+    "LambdaKinesisStreamServiceRole1ED1B3BD": {
       "Type": "AWS::IAM::Role",
       "Properties": {
         "AssumeRolePolicyDocument": {
@@ -254,10 +254,10 @@
         ]
       },
       "Metadata": {
-        "aws:cdk:path": "CdkStack/KinesisInfo/ServiceRole/Resource"
+        "aws:cdk:path": "CdkStack/LambdaKinesisStream/ServiceRole/Resource"
       }
     },
-    "KinesisInfoServiceRoleDefaultPolicy5F52CFDF": {
+    "LambdaKinesisStreamServiceRoleDefaultPolicyF267DCB3": {
       "Type": "AWS::IAM::Policy",
       "Properties": {
         "PolicyDocument": {
@@ -293,18 +293,18 @@
           ],
           "Version": "2012-10-17"
         },
-        "PolicyName": "KinesisInfoServiceRoleDefaultPolicy5F52CFDF",
+        "PolicyName": "LambdaKinesisStreamServiceRoleDefaultPolicyF267DCB3",
         "Roles": [
           {
-            "Ref": "KinesisInfoServiceRoleD1C59497"
+            "Ref": "LambdaKinesisStreamServiceRole1ED1B3BD"
           }
         ]
       },
       "Metadata": {
-        "aws:cdk:path": "CdkStack/KinesisInfo/ServiceRole/DefaultPolicy/Resource"
+        "aws:cdk:path": "CdkStack/LambdaKinesisStream/ServiceRole/DefaultPolicy/Resource"
       }
     },
-    "KinesisInfoB4619679": {
+    "LambdaKinesisStream88AE1F2E": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Code": {
@@ -315,30 +315,31 @@
         },
         "Role": {
           "Fn::GetAtt": [
-            "KinesisInfoServiceRoleD1C59497",
+            "LambdaKinesisStreamServiceRole1ED1B3BD",
             "Arn"
           ]
         },
+        "Description": "get eventinfo from kinesis data stream",
         "Handler": "index.handler",
         "Runtime": "nodejs14.x",
         "Timeout": 3
       },
       "DependsOn": [
-        "KinesisInfoServiceRoleDefaultPolicy5F52CFDF",
-        "KinesisInfoServiceRoleD1C59497"
+        "LambdaKinesisStreamServiceRoleDefaultPolicyF267DCB3",
+        "LambdaKinesisStreamServiceRole1ED1B3BD"
       ],
       "Metadata": {
-        "aws:cdk:path": "CdkStack/KinesisInfo/Resource",
+        "aws:cdk:path": "CdkStack/LambdaKinesisStream/Resource",
         "aws:asset:path": "asset.eca8a647bbbecb2002fc89abf2171af1addde39c6caab1269df815edcad0edba",
         "aws:asset:is-bundled": false,
         "aws:asset:property": "Code"
       }
     },
-    "KinesisInfoKinesisEventSourceCdkStackStream937EB6F065BBFCF4": {
+    "LambdaKinesisStreamKinesisEventSourceCdkStackStream937EB6F001B73CD3": {
       "Type": "AWS::Lambda::EventSourceMapping",
       "Properties": {
         "FunctionName": {
-          "Ref": "KinesisInfoB4619679"
+          "Ref": "LambdaKinesisStream88AE1F2E"
         },
         "BatchSize": 100,
         "EventSourceArn": {
@@ -350,7 +351,71 @@
         "StartingPosition": "TRIM_HORIZON"
       },
       "Metadata": {
-        "aws:cdk:path": "CdkStack/KinesisInfo/KinesisEventSource:CdkStackStream937EB6F0/Resource"
+        "aws:cdk:path": "CdkStack/LambdaKinesisStream/KinesisEventSource:CdkStackStream937EB6F0/Resource"
+      }
+    },
+    "LimbdaKinesisFirehoseServiceRoleA091BE7E": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "CdkStack/LimbdaKinesisFirehose/ServiceRole/Resource"
+      }
+    },
+    "LimbdaKinesisFirehose925A14CE": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "a647df9c1970bf38e0b92b73b681d610772039da261f01f0963ff06e80478a62.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "LimbdaKinesisFirehoseServiceRoleA091BE7E",
+            "Arn"
+          ]
+        },
+        "Description": "update event sources",
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 3
+      },
+      "DependsOn": [
+        "LimbdaKinesisFirehoseServiceRoleA091BE7E"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "CdkStack/LimbdaKinesisFirehose/Resource",
+        "aws:asset:path": "asset.a647df9c1970bf38e0b92b73b681d610772039da261f01f0963ff06e80478a62",
+        "aws:asset:is-bundled": false,
+        "aws:asset:property": "Code"
       }
     },
     "LambdaBusInfoServiceRole087CB63A": {

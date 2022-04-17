@@ -23,7 +23,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/0f755aaeeead44ef8d94466dc15a7ce0838b0ae51b45404be92249bdf06849af.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/dc9475ab4d2857ae60fca2e589cfc60e87a157d918a9da162e6ae4990abff8d1.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -119,28 +119,40 @@
             "data": "dynamodbbusinfo7FC290DB"
           }
         ],
-        "/CdkStack/KinesisInfo/ServiceRole/Resource": [
+        "/CdkStack/LambdaKinesisStream/ServiceRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "KinesisInfoServiceRoleD1C59497"
+            "data": "LambdaKinesisStreamServiceRole1ED1B3BD"
           }
         ],
-        "/CdkStack/KinesisInfo/ServiceRole/DefaultPolicy/Resource": [
+        "/CdkStack/LambdaKinesisStream/ServiceRole/DefaultPolicy/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "KinesisInfoServiceRoleDefaultPolicy5F52CFDF"
+            "data": "LambdaKinesisStreamServiceRoleDefaultPolicyF267DCB3"
           }
         ],
-        "/CdkStack/KinesisInfo/Resource": [
+        "/CdkStack/LambdaKinesisStream/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "KinesisInfoB4619679"
+            "data": "LambdaKinesisStream88AE1F2E"
           }
         ],
-        "/CdkStack/KinesisInfo/KinesisEventSource:CdkStackStream937EB6F0/Resource": [
+        "/CdkStack/LambdaKinesisStream/KinesisEventSource:CdkStackStream937EB6F0/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "KinesisInfoKinesisEventSourceCdkStackStream937EB6F065BBFCF4"
+            "data": "LambdaKinesisStreamKinesisEventSourceCdkStackStream937EB6F001B73CD3"
+          }
+        ],
+        "/CdkStack/LimbdaKinesisFirehose/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LimbdaKinesisFirehoseServiceRoleA091BE7E"
+          }
+        ],
+        "/CdkStack/LimbdaKinesisFirehose/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LimbdaKinesisFirehose925A14CE"
           }
         ],
         "/CdkStack/LambdaBusInfo/ServiceRole/Resource": [

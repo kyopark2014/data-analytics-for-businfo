@@ -76,9 +76,21 @@ export class CdkStack extends Stack {
     }); */
 
     // Lambda - kinesisInfo
-    const lambdakinesis = new lambda.Function(this, "KinesisInfo", {
+    const lambdakinesis = new lambda.Function(this, "LambdaKinesisStream", {
+      description: 'get eventinfo from kinesis data stream',
       runtime: lambda.Runtime.NODEJS_14_X, 
-      code: lambda.Code.fromAsset("repositories/get-kinesisinfo"), 
+      code: lambda.Code.fromAsset("repositories/lambda-kinesis-stream"), 
+      handler: "index.handler", 
+      timeout: cdk.Duration.seconds(3),
+      environment: {
+      }
+    }); 
+
+    // Lambda - kinesisInfo
+    const lambdafirehose = new lambda.Function(this, "LimbdaKinesisFirehose", {
+      description: 'update event sources',
+      runtime: lambda.Runtime.NODEJS_14_X, 
+      code: lambda.Code.fromAsset("repositories/lambda-kinesis-firehose"), 
       handler: "index.handler", 
       timeout: cdk.Duration.seconds(3),
       environment: {
@@ -93,7 +105,7 @@ export class CdkStack extends Stack {
     // Lambda - UpdateBusInfo
     const lambdaBusInfo = new lambda.Function(this, "LambdaBusInfo", {
       runtime: lambda.Runtime.NODEJS_14_X, 
-      code: lambda.Code.fromAsset("repositories/get-businfo"), 
+      code: lambda.Code.fromAsset("repositories/lambda-businfo"), 
       handler: "index.handler", 
       timeout: cdk.Duration.seconds(10),
       environment: {
