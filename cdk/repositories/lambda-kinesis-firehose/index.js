@@ -26,8 +26,7 @@ exports.handler = async (event) => {
         console.log('event: %j',converted);
 
         let binary = Buffer.from(JSON.stringify(converted), 'utf8').toString('base64');
-        console.log('binary: '+binary);
-
+        
         const outRecord = {
             recordId: recordId,
             result: 'Ok',
