@@ -47,7 +47,7 @@
 
 [Lambda for Kinesis](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/lambda-kinesis.md)는 Amazon Kinesis Data Stream으로 수집된 정보를 확인하고자 합니다. 이것은 Amazon Kinesis Firehose에 전달되는 데이터와 동일하므로, 입력의 형태를 이해하는데 도움이 됩니다. 
 
-## Amazon Kinesis Data Firehose의 데이터의 변환
+## Amazon Kinesis Data Firehose의 수집되는 데이터를 Lambda로 변환
 
 DynamoDB에 INSERT된 이벤트에는 실제 버스에 대한 정보이외에 데이터가 았으므로, 버스에 대한 정보만을 [Lambda for Firehose](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/lambda-firehose.md)을 이용하여 변환합니다.
 
