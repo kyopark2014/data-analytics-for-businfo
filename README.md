@@ -79,6 +79,10 @@ CDK Crawler를 초기 설정하는 부분이 있어서, Console에서 작업이 
 
 ## 시험 및 결과
 
-AWS CDK로 현재 인프라를 deploy하면, Cron Rule에 따라 Lambda가 정기적으로 버스의 실시간 정보를 조회하여 DynamoDB에 저장하고 Amazon Kinesis를 통해 Parquet 형식으로 S3에 저장됩니다. 저장된 버스 정보는 아래와 같이 확인 할 수 있습니다. 
+AWS CDK로 현재 인프라를 deploy하면, Cron Rule에 따라 Lambda가 정기적으로 버스의 실시간 정보를 조회하여 DynamoDB에 저장하고 Amazon Kinesis를 통해 Parquet 형식으로 S3에 저장됩니다. Amazon S3에 저장된 버스 정보는 아래와 같이 확인 할 수 있습니다. 
 
 ![image](https://user-images.githubusercontent.com/52392004/163661209-f81d4bc1-8438-454a-aa2f-9ead2e09124c.png)
+
+Athena로 조회한 Table 정보는 아래와 같습니다. 
+
+<img width="900" alt="image" src="https://user-images.githubusercontent.com/52392004/163711108-bdbf7f3e-2a2c-4ef8-bbda-58512c4beaaa.png">
