@@ -33,7 +33,7 @@
 
 ## 주기적인 버스 정보 수집
 
-[Amazon CDK로 정의한 event rule](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/lib/cdk-stack.ts)에 의해, 아래와 같이 1분 단위로 버스 도착 정보를 열람합니다. [Lambda for businfo](https://github.com/kyopark2014/data-analytics-for-businfo/tree/main/cdk/repositories/get-businfo)는 Bus open api를 호출하여 DynamoDB에 저장합니다.  
+[Amazon CDK로 정의한 event rule](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/lib/cdk-stack.ts)에 의해, 아래와 같이 1분 단위로 버스 도착 정보를 열람합니다. [Lambda for businfo](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/bus-info.md)는 Bus open api를 호출하여 DynamoDB에 저장합니다.  
 
 ```java
     const rule = new events.Rule(this, 'Cron', {
