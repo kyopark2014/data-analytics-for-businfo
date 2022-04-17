@@ -6,7 +6,9 @@
 
 "센터필드 정류장에서 얼마나 오래 기다려야 버스를 탈 수 있을까?" 
 
-센터필드 정류장에는 다양한 버스들이 도착하는데, 이 버스들을 타기 위해 탑승객들이 얼마나 기다리는지 알고 싶다는 요구가 있다고 가정하고 상기 문제를 Amazon Lambda Cronjob, Amazon Kinesis Data Stream을 통해 구현하고자 합니다. 여기서는 버스를 기다리는 평균 시간을 계산하고자 하므로, 일정시간(예: 10초) 간격으로 버스를 타려는 탑승객들이 오고, 이 시점에 버스 도착 예정시간이 버스 도착시간으로 가정하였습니다. 센터필드 정류장이 있는 톄혜란로는 트래픽이 매우 심하므로, 버스 도착 예정시간과 실제 도착시간은 다를 수 있습니다. 이것은 추후 ML을 통해 추론하는 별도 프로젝트로 진행합니다. 
+센터필드 정류장에는 다양한 버스들이 도착하는데, 이 버스들을 타기 위해 탑승객들이 얼마나 기다리는지 알고 싶다는 요구가 있다고 가정합니다. 버스를 기다리는 시간은 버스회사에서 알려주는 예상 도착 시간이 있으나, 출퇴근 트래픽이 극심한 센터필드 버스 정류장은 버스 도착 시간이 예상 도착시간보다 더 오래 걸리기도 합니다. 버스 도착 예상시간의 변화를 분석하면, 현재의 트래픽에 따른 버스의 지연시간을 예측할 수 있고, 전날 또는 평일/주말을 비교하면, 좀 더 정확한 예측이 가능합니다. 
+
+여기서는 버스 도착 시간에 대한 구체적인 예측이 가능하도록, 센터필드 버스 정류장에 도착하는 버스 정보를 수집하여 저장하고 분석하는 준비를 합니다. 이를 통해, 현재 문제에 대한 구체적인 수치를 확보하고, 향후 문제를 풀때 필요한 각종 데이터를 확보할 수 있습니다. 
 
 ## Architecture 구성 
 
@@ -19,11 +21,13 @@
 
 1. Cron job 형태로 Lambda가 Centerfied 버스정류장에 도착하는 버스정보를 정기적으로 조회하여 DynamoDB에 저장합니다.
 
-2. DynomoDB에 Write되는 이벤트를 Kinesis Data Stream으로 전달합니다.
+2. DynomoDB에 INSERT되는 이벤트를 Kinesis Data Stream으로 전달합니다.
 
-3. Kinesis Data Stream이 Queue형태로 저장한 데이터를 Kinesis Firehose가 S3에 저장합니다.
+3. Kinesis Data Stream이 Queue형태로 저장한 데이터를 Kinesis Firehose가 받아서, 분석에 적합하도록 데이터를 변환 합니다.
 
-4. S3에 저장된 데이터는 Amazon QuickSight를 통해 원하는 데이터를 화면에 보여줍니다.
+4. 변환된 데이터를 분석이 용이하도록 AWS Glue Data Catalog를 이용해 parquet 형식으로 변환하여, S3에 저장합니다.
+ 
+5. S3에 저장된 데이터는 Amazon Athena를 통해 읽고 분석합니다. 
 
 
 ## 버스 도착 정보 조회
@@ -33,7 +37,7 @@
 
 ## 주기적인 버스 정보 수집
 
-[Amazon CDK로 정의한 event rule](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/lib/cdk-stack.ts)에 의해, 아래와 같이 1분 단위로 버스 도착 정보를 열람합니다. [Lambda for businfo](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/repositories/lambda-businfo/index.js)는 Bus open api를 호출하여 DynamoDB에 저장합니다.  
+[Amazon CDK로 정의한 event rule](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/lib/cdk-stack.ts)을 이용하여, 아래와 같이 정기적으로 버스 정보를 열람합니다. [Lambda for businfo](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/repositories/lambda-businfo/index.js)는 Bus open api를 호출하여 DynamoDB에 저장합니다.  
 
 ```java
     const rule = new events.Rule(this, 'Cron', {
@@ -45,11 +49,11 @@
 
 ## Amazon Kinesis Data Stream로 수집되는 정보 
 
-[Lambda for Kinesis](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/lambda-kinesis.md)는 Amazon Kinesis Data Stream으로 수집된 정보를 확인하고자 합니다. 이것은 Amazon Kinesis Firehose에 전달되는 데이터와 동일하므로, 입력의 형태를 이해하는데 도움이 됩니다. 
+Amazon Kinesis Data Stream으로 수집된 정보를 Queue처럼 Shard에 저장 합니다. 저장된 스트림 데이터는 필요한 서비스들이 호출하여 사용할 수 있는데, 여기서는 Amazon Kinesis Data Firehose 이외에도 [Lambda for Kinesis](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/lambda-kinesis.md)를 이용해 스트림 데이터의 데이터를 모니터링 하고 필요시 추가적인 데이터를 수집합니다. 
 
 ## Amazon Kinesis Data Firehose의 수집되는 데이터를 Lambda로 변환
 
-DynamoDB에 INSERT된 이벤트에는 실제 버스에 대한 정보이외에 데이터가 았으므로, 버스에 대한 정보만을 [Lambda for Firehose](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/lambda-firehose.md)을 이용하여 변환합니다.
+Amazon Kinesis Data Firehose에 전달된 데이터는 DynamoDB에 INSERT 이벤트 정보이므로, 버스에 대한 정보 이외에도 DynamoDB에 대한 이벤트 정보가 포함되어 있습니다. 버스에 대한 정보만을 [Lambda for Firehose](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/lambda-firehose.md)을 이용하여 추출하는 변환 작업을 합니다.
 
 ## Parquet 로 형식 변환 
 
