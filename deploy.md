@@ -20,10 +20,11 @@ https://ap-northeast-2.console.aws.amazon.com/glue/home?region=ap-northeast-2#ca
 
 4) [AWS Glue] - [Databases] - [Tables]를 선택하면 아래와 같이 "cdkstack_cdkbusinfo2c2cf86c_1qgef8o3uv1x7"이 생성되었음을 다시 확인합니다. 
 
-
 ![noname](https://user-images.githubusercontent.com/52392004/163696471-7e701a87-0768-44ea-9a59-7faa5cfd33f4.png)
 
 5) [Amazon Kinesis] - [Delivery streams]로 진입하여, "CdkStack-FirehoseDeliveryStream-Y7moKLyU54iD"을 선택합니다.
+
+https://ap-northeast-2.console.aws.amazon.com/firehose/home?region=ap-northeast-2#/streams
 
 ![noname](https://user-images.githubusercontent.com/52392004/163696522-b82e3916-c01e-474f-a42c-25e70490ba44.png)
 
