@@ -43,6 +43,9 @@
     rule.addTarget(new targets.LambdaFunction(lambdaBusInfo));
 ```
 
+## Amazon Kinesis Data Stream에서 수집되는 정보 
+
+[Lambda for Kinesis](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/lambda-kinesis.md)는 Amazon Kinesis Data Stream으로 수집된 정보를 확인하고자 합니다. 이것은 Amazon Kinesis Firehose에 전달되는 데이터와 동일하므로, 입력의 형태를 이해하는데 도움이 됩니다. 
 
 ## Amazon Kinesis Data Firehose에 전달된 데이터의 변환
 
