@@ -57,6 +57,20 @@ DynamoDB에 INSERT된 이벤트에는 실제 버스에 대한 정보이외에 �
 
 이를위해 Amazon Glue Data Catalog 기능인 Crawler를 이용해, Table을 생성하고, Amazon Kinesis Fiehose에서 Parquet 변환을 합니다.
 
+## Athena Work Group 설정 
+
+AWS CDK로 아래와 같이 Athena Work Group을 설정합니다. 
+
+```java
+    new athena.CfnWorkGroup(this, 'analytics-athena-workgroup', {
+      name: `businfo-workgroup`,
+      workGroupConfiguration: {
+        resultConfiguration: {
+          outputLocation: `s3://${s3Bucket.bucketName}`,
+        },
+      },
+    })
+```    
 
 ## 인프라 생성 및 삭제 
 
@@ -86,3 +100,7 @@ AWS CDK로 현재 인프라를 deploy하면, Cron Rule에 따라 Lambda가 정�
 Athena로 조회한 Table 정보는 아래와 같습니다. 
 
 <img width="900" alt="image" src="https://user-images.githubusercontent.com/52392004/163711108-bdbf7f3e-2a2c-4ef8-bbda-58512c4beaaa.png">
+
+Athena 조회시 아래와 같이 S3에 csv, meta 파일을 생성됨을 확인 할 수 있습니다.
+
+<img width="1003" alt="image" src="https://user-images.githubusercontent.com/52392004/163711189-00e5122a-d187-40f9-ade3-d20e6af704b9.png">
