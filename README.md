@@ -12,7 +12,7 @@
 
 전체적인 구현 Architecture는 아래와 같습니다.
 
-![image](https://user-images.githubusercontent.com/52392004/163661078-4d6a01ca-8802-49b5-b3a3-7bea0522950a.png)
+![image](https://user-images.githubusercontent.com/52392004/163705113-4d9fe08c-c912-49ed-8aba-11f7b1223374.png)
 
 
 주요 사용 시나리오는 아래와 같습니다.
