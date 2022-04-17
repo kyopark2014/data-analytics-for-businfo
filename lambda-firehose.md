@@ -77,7 +77,7 @@
         };
 ```
 
-이와 같은 동작을 [lambad for firehose](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/repositories/lambda-kinesis-firehose/index.js)의 소스에 구현하였습니다.
+이와 같은 동작을 [lambad for firehose](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/repositories/lambda-kinesis-firehose/index.js) 에 구현하였습니다.
 
 여기서, lambda for firehose에서는 아래와 같이 event에서 'records'를 꺼내서, 여기서 'data'만을 base64로 decoding 합니다. 
 
