@@ -104,3 +104,7 @@ Athena로 조회한 Table 정보는 아래와 같습니다.
 Athena 조회시 아래와 같이 S3에 csv, meta 파일을 생성됨을 확인 할 수 있습니다.
 
 <img width="1003" alt="image" src="https://user-images.githubusercontent.com/52392004/163711189-00e5122a-d187-40f9-ade3-d20e6af704b9.png">
+
+아래는 생성된 csv에 저장된 데이터의 예 입니다. 
+
+<img width="818" alt="image" src="https://user-images.githubusercontent.com/52392004/163711367-be6c51a4-5300-4bc7-919a-481373dceeac.png">
