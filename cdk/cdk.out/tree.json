@@ -182,6 +182,14 @@
               "version": "2.17.0"
             }
           },
+          "s3Path": {
+            "id": "s3Path",
+            "path": "CdkStack/s3Path",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.CfnOutput",
+              "version": "2.17.0"
+            }
+          },
           "Stream": {
             "id": "Stream",
             "path": "CdkStack/Stream",
@@ -235,158 +243,6 @@
             "path": "CdkStack/StreamARN",
             "constructInfo": {
               "fqn": "aws-cdk-lib.CfnOutput",
-              "version": "2.17.0"
-            }
-          },
-          "FirehoseRole": {
-            "id": "FirehoseRole",
-            "path": "CdkStack/FirehoseRole",
-            "children": {
-              "Resource": {
-                "id": "Resource",
-                "path": "CdkStack/FirehoseRole/Resource",
-                "attributes": {
-                  "aws:cdk:cloudformation:type": "AWS::IAM::Role",
-                  "aws:cdk:cloudformation:props": {
-                    "assumeRolePolicyDocument": {
-                      "Statement": [
-                        {
-                          "Action": "sts:AssumeRole",
-                          "Effect": "Allow",
-                          "Principal": {
-                            "Service": "firehose.amazonaws.com"
-                          }
-                        }
-                      ],
-                      "Version": "2012-10-17"
-                    },
-                    "policies": [
-                      {
-                        "policyName": "allow-s3-kinesis-logs",
-                        "policyDocument": {
-                          "Statement": [
-                            {
-                              "Action": [
-                                "kinesis:DescribeStream",
-                                "kinesis:DescribeStreamSummary",
-                                "kinesis:GetRecords",
-                                "kinesis:GetShardIterator",
-                                "kinesis:ListShards",
-                                "kinesis:SubscribeToShard"
-                              ],
-                              "Effect": "Allow",
-                              "Resource": {
-                                "Fn::GetAtt": [
-                                  "Stream790BDEE4",
-                                  "Arn"
-                                ]
-                              }
-                            },
-                            {
-                              "Action": [
-                                "s3:GetObject*",
-                                "s3:GetBucket*",
-                                "s3:List*",
-                                "s3:DeleteObject*",
-                                "s3:PutObject*",
-                                "s3:Abort*"
-                              ],
-                              "Effect": "Allow",
-                              "Resource": [
-                                {
-                                  "Fn::GetAtt": [
-                                    "cdkbusinfo2C2CF86C",
-                                    "Arn"
-                                  ]
-                                },
-                                {
-                                  "Fn::Join": [
-                                    "",
-                                    [
-                                      {
-                                        "Fn::GetAtt": [
-                                          "cdkbusinfo2C2CF86C",
-                                          "Arn"
-                                        ]
-                                      },
-                                      "/*"
-                                    ]
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "Action": "glue:*",
-                              "Effect": "Allow",
-                              "Resource": "*"
-                            }
-                          ],
-                          "Version": "2012-10-17"
-                        }
-                      }
-                    ]
-                  }
-                },
-                "constructInfo": {
-                  "fqn": "aws-cdk-lib.aws_iam.CfnRole",
-                  "version": "2.17.0"
-                }
-              }
-            },
-            "constructInfo": {
-              "fqn": "aws-cdk-lib.aws_iam.Role",
-              "version": "2.17.0"
-            }
-          },
-          "FirehoseDeliveryStream": {
-            "id": "FirehoseDeliveryStream",
-            "path": "CdkStack/FirehoseDeliveryStream",
-            "attributes": {
-              "aws:cdk:cloudformation:type": "AWS::KinesisFirehose::DeliveryStream",
-              "aws:cdk:cloudformation:props": {
-                "deliveryStreamType": "KinesisStreamAsSource",
-                "extendedS3DestinationConfiguration": {
-                  "bucketArn": {
-                    "Fn::GetAtt": [
-                      "cdkbusinfo2C2CF86C",
-                      "Arn"
-                    ]
-                  },
-                  "bufferingHints": {
-                    "intervalInSeconds": 60,
-                    "sizeInMBs": 64
-                  },
-                  "compressionFormat": "UNCOMPRESSED",
-                  "encryptionConfiguration": {
-                    "noEncryptionConfig": "NoEncryption"
-                  },
-                  "prefix": "businfo/",
-                  "errorOutputPrefix": "eror/",
-                  "roleArn": {
-                    "Fn::GetAtt": [
-                      "FirehoseRoleAA67C190",
-                      "Arn"
-                    ]
-                  }
-                },
-                "kinesisStreamSourceConfiguration": {
-                  "kinesisStreamArn": {
-                    "Fn::GetAtt": [
-                      "Stream790BDEE4",
-                      "Arn"
-                    ]
-                  },
-                  "roleArn": {
-                    "Fn::GetAtt": [
-                      "FirehoseRoleAA67C190",
-                      "Arn"
-                    ]
-                  }
-                }
-              }
-            },
-            "constructInfo": {
-              "fqn": "aws-cdk-lib.aws_kinesisfirehose.CfnDeliveryStream",
               "version": "2.17.0"
             }
           },
@@ -901,6 +757,352 @@
             },
             "constructInfo": {
               "fqn": "aws-cdk-lib.aws_events.Rule",
+              "version": "2.17.0"
+            }
+          },
+          "ParquetGlueCrawlerRole": {
+            "id": "ParquetGlueCrawlerRole",
+            "path": "CdkStack/ParquetGlueCrawlerRole",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "CdkStack/ParquetGlueCrawlerRole/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                  "aws:cdk:cloudformation:props": {
+                    "assumeRolePolicyDocument": {
+                      "Statement": [
+                        {
+                          "Action": "sts:AssumeRole",
+                          "Effect": "Allow",
+                          "Principal": {
+                            "AWS": "*"
+                          }
+                        }
+                      ],
+                      "Version": "2012-10-17"
+                    },
+                    "description": "Role used by Glue",
+                    "managedPolicyArns": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":iam::aws:policy/service-role/AWSGlueServiceRole"
+                          ]
+                        ]
+                      }
+                    ],
+                    "policies": [
+                      {
+                        "policyName": "allow-s3-glue-parquet",
+                        "policyDocument": {
+                          "Statement": [
+                            {
+                              "Action": [
+                                "s3:AbortMultipartUpload",
+                                "s3:GetBucketLocation",
+                                "s3:GetObject",
+                                "s3:ListBucket",
+                                "s3:ListBucketMultipartUploads",
+                                "s3:PutObject"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": [
+                                {
+                                  "Fn::GetAtt": [
+                                    "cdkbusinfo2C2CF86C",
+                                    "Arn"
+                                  ]
+                                },
+                                {
+                                  "Fn::Join": [
+                                    "",
+                                    [
+                                      {
+                                        "Fn::GetAtt": [
+                                          "cdkbusinfo2C2CF86C",
+                                          "Arn"
+                                        ]
+                                      },
+                                      "/*"
+                                    ]
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "Action": [
+                                "glue:GetTable",
+                                "glue:GetTableVersion",
+                                "glue:GetTableVersions"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": "*"
+                            },
+                            {
+                              "Action": [
+                                "firehose:DeleteDeliveryStream",
+                                "firehose:PutRecord",
+                                "firehose:PutRecordBatch",
+                                "firehose:UpdateDestination"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": "*"
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                  "version": "2.17.0"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_iam.Role",
+              "version": "2.17.0"
+            }
+          },
+          "parquetCrawlerRoleArn": {
+            "id": "parquetCrawlerRoleArn",
+            "path": "CdkStack/parquetCrawlerRoleArn",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.CfnOutput",
+              "version": "2.17.0"
+            }
+          },
+          "TranslateToParquetGlueCrawler": {
+            "id": "TranslateToParquetGlueCrawler",
+            "path": "CdkStack/TranslateToParquetGlueCrawler",
+            "attributes": {
+              "aws:cdk:cloudformation:type": "AWS::Glue::Crawler",
+              "aws:cdk:cloudformation:props": {
+                "role": {
+                  "Fn::GetAtt": [
+                    "ParquetGlueCrawlerRole1EF6A24C",
+                    "Arn"
+                  ]
+                },
+                "targets": {
+                  "s3Targets": [
+                    {
+                      "path": {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "s3://",
+                            {
+                              "Ref": "cdkbusinfo2C2CF86C"
+                            }
+                          ]
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "databaseName": "inspector",
+                "name": "translate-parquet-crawler",
+                "schemaChangePolicy": {
+                  "deleteBehavior": "DELETE_FROM_DATABASE"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_glue.CfnCrawler",
+              "version": "2.17.0"
+            }
+          },
+          "FirehoseRole": {
+            "id": "FirehoseRole",
+            "path": "CdkStack/FirehoseRole",
+            "children": {
+              "Resource": {
+                "id": "Resource",
+                "path": "CdkStack/FirehoseRole/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::IAM::Role",
+                  "aws:cdk:cloudformation:props": {
+                    "assumeRolePolicyDocument": {
+                      "Statement": [
+                        {
+                          "Action": "sts:AssumeRole",
+                          "Effect": "Allow",
+                          "Principal": {
+                            "Service": "firehose.amazonaws.com"
+                          }
+                        }
+                      ],
+                      "Version": "2012-10-17"
+                    },
+                    "policies": [
+                      {
+                        "policyName": "allow-s3-kinesis-logs",
+                        "policyDocument": {
+                          "Statement": [
+                            {
+                              "Action": [
+                                "kinesis:DescribeStream",
+                                "kinesis:DescribeStreamSummary",
+                                "kinesis:GetRecords",
+                                "kinesis:GetShardIterator",
+                                "kinesis:ListShards",
+                                "kinesis:SubscribeToShard"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": {
+                                "Fn::GetAtt": [
+                                  "Stream790BDEE4",
+                                  "Arn"
+                                ]
+                              }
+                            },
+                            {
+                              "Action": [
+                                "s3:AbortMultipartUpload",
+                                "s3:GetBucketLocation",
+                                "s3:GetObject",
+                                "s3:ListBucket",
+                                "s3:ListBucketMultipartUploads",
+                                "s3:PutObject"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": [
+                                {
+                                  "Fn::GetAtt": [
+                                    "cdkbusinfo2C2CF86C",
+                                    "Arn"
+                                  ]
+                                },
+                                {
+                                  "Fn::Join": [
+                                    "",
+                                    [
+                                      {
+                                        "Fn::GetAtt": [
+                                          "cdkbusinfo2C2CF86C",
+                                          "Arn"
+                                        ]
+                                      },
+                                      "/*"
+                                    ]
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "Action": [
+                                "glue:GetTable",
+                                "glue:GetTableVersion",
+                                "glue:GetTableVersions"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": "*"
+                            }
+                          ],
+                          "Version": "2012-10-17"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                  "version": "2.17.0"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_iam.Role",
+              "version": "2.17.0"
+            }
+          },
+          "FirehoseDeliveryStream": {
+            "id": "FirehoseDeliveryStream",
+            "path": "CdkStack/FirehoseDeliveryStream",
+            "attributes": {
+              "aws:cdk:cloudformation:type": "AWS::KinesisFirehose::DeliveryStream",
+              "aws:cdk:cloudformation:props": {
+                "deliveryStreamType": "KinesisStreamAsSource",
+                "extendedS3DestinationConfiguration": {
+                  "bucketArn": {
+                    "Fn::GetAtt": [
+                      "cdkbusinfo2C2CF86C",
+                      "Arn"
+                    ]
+                  },
+                  "bufferingHints": {
+                    "intervalInSeconds": 60,
+                    "sizeInMBs": 128
+                  },
+                  "compressionFormat": "UNCOMPRESSED",
+                  "encryptionConfiguration": {
+                    "noEncryptionConfig": "NoEncryption"
+                  },
+                  "prefix": "businfo/",
+                  "errorOutputPrefix": "eror/",
+                  "roleArn": {
+                    "Fn::GetAtt": [
+                      "FirehoseRoleAA67C190",
+                      "Arn"
+                    ]
+                  }
+                },
+                "kinesisStreamSourceConfiguration": {
+                  "kinesisStreamArn": {
+                    "Fn::GetAtt": [
+                      "Stream790BDEE4",
+                      "Arn"
+                    ]
+                  },
+                  "roleArn": {
+                    "Fn::GetAtt": [
+                      "FirehoseRoleAA67C190",
+                      "Arn"
+                    ]
+                  }
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_kinesisfirehose.CfnDeliveryStream",
+              "version": "2.17.0"
+            }
+          },
+          "analytics-athena-workgroup": {
+            "id": "analytics-athena-workgroup",
+            "path": "CdkStack/analytics-athena-workgroup",
+            "attributes": {
+              "aws:cdk:cloudformation:type": "AWS::Athena::WorkGroup",
+              "aws:cdk:cloudformation:props": {
+                "name": "businfo-workgroup",
+                "workGroupConfiguration": {
+                  "resultConfiguration": {
+                    "outputLocation": {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "s3://",
+                          {
+                            "Ref": "cdkbusinfo2C2CF86C"
+                          }
+                        ]
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_athena.CfnWorkGroup",
               "version": "2.17.0"
             }
           },

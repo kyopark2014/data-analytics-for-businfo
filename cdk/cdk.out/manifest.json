@@ -23,7 +23,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/6bda2ca9ca00cc72264a66e06e3588e09d88266844cbd7559c46e2580cb0c526.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/0f755aaeeead44ef8d94466dc15a7ce0838b0ae51b45404be92249bdf06849af.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -81,6 +81,12 @@
             "data": "s3Arn"
           }
         ],
+        "/CdkStack/s3Path": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "s3Path"
+          }
+        ],
         "/CdkStack/Stream/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -97,18 +103,6 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "StreamARN"
-          }
-        ],
-        "/CdkStack/FirehoseRole/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "FirehoseRoleAA67C190"
-          }
-        ],
-        "/CdkStack/FirehoseDeliveryStream": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "FirehoseDeliveryStream"
           }
         ],
         "/CdkStack/dynamodb-businfo": [
@@ -177,6 +171,42 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "CronAllowEventRuleCdkStackLambdaBusInfo6DA6B5A8B73586AA"
+          }
+        ],
+        "/CdkStack/ParquetGlueCrawlerRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ParquetGlueCrawlerRole1EF6A24C"
+          }
+        ],
+        "/CdkStack/parquetCrawlerRoleArn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "parquetCrawlerRoleArn"
+          }
+        ],
+        "/CdkStack/TranslateToParquetGlueCrawler": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TranslateToParquetGlueCrawler"
+          }
+        ],
+        "/CdkStack/FirehoseRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "FirehoseRoleAA67C190"
+          }
+        ],
+        "/CdkStack/FirehoseDeliveryStream": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "FirehoseDeliveryStream"
+          }
+        ],
+        "/CdkStack/analytics-athena-workgroup": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "analyticsathenaworkgroup"
           }
         ],
         "/CdkStack/CDKMetadata/Default": [
