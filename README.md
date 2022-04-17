@@ -12,7 +12,7 @@
 
 전체적인 구현 Architecture는 아래와 같습니다.
 
-![image](https://user-images.githubusercontent.com/52392004/163661078-4d6a01ca-8802-49b5-b3a3-7bea0522950a.png)
+![image](https://user-images.githubusercontent.com/52392004/163705113-4d9fe08c-c912-49ed-8aba-11f7b1223374.png)
 
 
 주요 사용 시나리오는 아래와 같습니다.
@@ -28,12 +28,12 @@
 
 ## 버스 도착 정보 조회
 
-경기버스 노선정보는 [버스정보조회](https://github.com/kyopark2014/kinesis-data-stream/blob/main/bus-info.md) 를 이용하여 읽어올 수 있습니다. 
+경기버스 노선정보는 [버스정보조회](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/bus-info.md) 를 이용하여 읽어올 수 있습니다. 
 
 
 ## 주기적인 버스 정보 수집
 
-[Amazon CDK로 정의한 event rule](https://github.com/kyopark2014/kinesis-data-stream/blob/main/cdk/lib/cdk-stack.ts)에 의해, 아래와 같이 1분 단위로 버스 도착 정보를 열람합니다. [Lambda for businfo](https://github.com/kyopark2014/kinesis-data-stream/tree/main/cdk/repositories/get-businfo)는 Bus open api를 호출하여 DynamoDB에 저장합니다.  
+[Amazon CDK로 정의한 event rule](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/lib/cdk-stack.ts)에 의해, 아래와 같이 1분 단위로 버스 도착 정보를 열람합니다. [Lambda for businfo](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/repositories/lambda-businfo/index.js)는 Bus open api를 호출하여 DynamoDB에 저장합니다.  
 
 ```java
     const rule = new events.Rule(this, 'Cron', {
@@ -42,7 +42,22 @@
     }); 
     rule.addTarget(new targets.LambdaFunction(lambdaBusInfo));
 ```
-    
+
+## Amazon Kinesis Data Stream로 수집되는 정보 
+
+[Lambda for Kinesis](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/lambda-kinesis.md)는 Amazon Kinesis Data Stream으로 수집된 정보를 확인하고자 합니다. 이것은 Amazon Kinesis Firehose에 전달되는 데이터와 동일하므로, 입력의 형태를 이해하는데 도움이 됩니다. 
+
+## Amazon Kinesis Data Firehose의 데이터의 변환
+
+DynamoDB에 INSERT된 이벤트에는 실제 버스에 대한 정보이외에 데이터가 았으므로, 버스에 대한 정보만을 [Lambda for Firehose](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/lambda-firehose.md)을 이용하여 변환합니다.
+
+## Parquet 로 형식 변환 
+
+연속적으로 Amazon Kinesis Data Stream으로 수집된 정보를 Amazon S3에 저장 후 활용하기 위해서, 저장하는 용량이나 성능에서 유용한 parquet로 변환하고자 합니다. 
+
+이를위해 Amazon Glue Data Catalog 기능인 Crawler를 이용해, Table을 생성하고, Amazon Kinesis Fiehose에서 Parquet 변환을 합니다.
+
+
 ## 인프라 생성 및 삭제 
 
 AWS CDK를 이용하여 인프라를 생성할 수 있습니다. 상세한 내용은 [AWS CDK로 Data Ingestion](https://github.com/kyopark2014/data-inggestion-using-kinesis/blob/main/cdk/README.md)을 참고하시기 바랍니다.
@@ -62,8 +77,8 @@ $ cdk destroy
 
 CDK Crawler를 초기 설정하는 부분이 있어서, Console에서 작업이 필요합니다. [Deploy 추가 사항](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/deploy.md)을 선택하여, 필요한 작업을 수행합니다.
 
-## 저장된 데이터
+## 시험 및 결과
 
-AWS CDK로 현재 인프라를 deploy시 아래와 같이 S3로 버스정보가 parquet 형식으로 저장되는것을 확인 할 수 있습니다. 
+AWS CDK로 현재 인프라를 deploy하면, Cron Rule에 따라 Lambda가 정기적으로 버스의 실시간 정보를 조회하여 DynamoDB에 저장하고 Amazon Kinesis를 통해 Parquet 형식으로 S3에 저장됩니다. 저장된 버스 정보는 아래와 같이 확인 할 수 있습니다. 
 
 ![image](https://user-images.githubusercontent.com/52392004/163661209-f81d4bc1-8438-454a-aa2f-9ead2e09124c.png)
