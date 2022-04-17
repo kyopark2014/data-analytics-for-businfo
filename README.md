@@ -28,12 +28,12 @@
 
 ## 버스 도착 정보 조회
 
-경기버스 노선정보는 [버스정보조회](https://github.com/kyopark2014/kinesis-data-stream/blob/main/bus-info.md) 를 이용하여 읽어올 수 있습니다. 
+경기버스 노선정보는 [버스정보조회](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/bus-info.md) 를 이용하여 읽어올 수 있습니다. 
 
 
 ## 주기적인 버스 정보 수집
 
-[Amazon CDK로 정의한 event rule](https://github.com/kyopark2014/kinesis-data-stream/blob/main/cdk/lib/cdk-stack.ts)에 의해, 아래와 같이 1분 단위로 버스 도착 정보를 열람합니다. [Lambda for businfo](https://github.com/kyopark2014/kinesis-data-stream/tree/main/cdk/repositories/get-businfo)는 Bus open api를 호출하여 DynamoDB에 저장합니다.  
+[Amazon CDK로 정의한 event rule](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/lib/cdk-stack.ts)에 의해, 아래와 같이 1분 단위로 버스 도착 정보를 열람합니다. [Lambda for businfo](https://github.com/kyopark2014/data-analytics-for-businfo/tree/main/cdk/repositories/get-businfo)는 Bus open api를 호출하여 DynamoDB에 저장합니다.  
 
 ```java
     const rule = new events.Rule(this, 'Cron', {
@@ -42,7 +42,14 @@
     }); 
     rule.addTarget(new targets.LambdaFunction(lambdaBusInfo));
 ```
-    
+
+
+## Amazon Kinesis Data Firehose에 전달된 데이터의 변환
+
+DynamoDB에 INSERT된 이벤트에는 실제 버스에 대한 정보이외에 데이터가 았으므로, 버스에 대한 정보만을 [Lambda for Firehose](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/lambda-firehose.md)을 이용하여 변환합니다.
+
+
+
 ## 인프라 생성 및 삭제 
 
 AWS CDK를 이용하여 인프라를 생성할 수 있습니다. 상세한 내용은 [AWS CDK로 Data Ingestion](https://github.com/kyopark2014/data-inggestion-using-kinesis/blob/main/cdk/README.md)을 참고하시기 바랍니다.
