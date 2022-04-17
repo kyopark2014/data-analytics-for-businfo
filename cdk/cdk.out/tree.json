@@ -631,6 +631,14 @@
               "version": "2.17.0"
             }
           },
+          "LambdaKinesisARN": {
+            "id": "LambdaKinesisARN",
+            "path": "CdkStack/LambdaKinesisARN",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.CfnOutput",
+              "version": "2.17.0"
+            }
+          },
           "LambdaBusInfo": {
             "id": "LambdaBusInfo",
             "path": "CdkStack/LambdaBusInfo",
@@ -1058,6 +1066,9 @@
                       ],
                       "Version": "2012-10-17"
                     },
+                    "managedPolicyArns": [
+                      "arn:aws:iam::aws:policy/AWSLambdaExecute"
+                    ],
                     "policies": [
                       {
                         "policyName": "allow-s3-kinesis-logs",
@@ -1115,6 +1126,19 @@
                             },
                             {
                               "Action": [
+                                "lambda:InvokeFunction",
+                                "lambda:GetFunctionConfiguration"
+                              ],
+                              "Effect": "Allow",
+                              "Resource": {
+                                "Fn::GetAtt": [
+                                  "LimbdaKinesisFirehose925A14CE",
+                                  "Arn"
+                                ]
+                              }
+                            },
+                            {
+                              "Action": [
                                 "glue:GetTable",
                                 "glue:GetTableVersion",
                                 "glue:GetTableVersions"
@@ -1168,6 +1192,25 @@
                     "Fn::GetAtt": [
                       "FirehoseRoleAA67C190",
                       "Arn"
+                    ]
+                  },
+                  "processingConfiguration": {
+                    "enabled": true,
+                    "processors": [
+                      {
+                        "type": "Lambda",
+                        "parameters": [
+                          {
+                            "parameterName": "LambdaArn",
+                            "parameterValue": {
+                              "Fn::GetAtt": [
+                                "LimbdaKinesisFirehose925A14CE",
+                                "Arn"
+                              ]
+                            }
+                          }
+                        ]
+                      }
                     ]
                   }
                 },

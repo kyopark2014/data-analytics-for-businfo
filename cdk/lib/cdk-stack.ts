@@ -96,7 +96,12 @@ export class CdkStack extends Stack {
       environment: {
       }
     }); 
+    new cdk.CfnOutput(this, 'LambdaKinesisARN', {
+      value: lambdafirehose.functionArn,
+      description: 'The arn of lambda for kinesis',
+    });
 
+    // connect lambda for kinesis with kinesis data stream
     const eventSource = new lambdaEventSources.KinesisEventSource(stream, {
       startingPosition: lambda.StartingPosition.TRIM_HORIZON,
     });
@@ -264,14 +269,15 @@ export class CdkStack extends Stack {
                   s3Bucket.bucketArn + "/*"
                 ]
               }),
-              /*  new iam.PolicyStatement({   // for AWS glue data catalog
+              new iam.PolicyStatement({   // for AWS glue data catalog
                   effect: iam.Effect.ALLOW,
                   actions: [
                     "lambda:InvokeFunction", 
                     "lambda:GetFunctionConfiguration" 
                   ],
-                  resources: ['*'],
-                }), */
+                  // resources: ['*'],
+                  resources: [lambdafirehose.functionArn],
+                }),
               new iam.PolicyStatement({   // for AWS glue data catalog (data format conversion)
                 effect: iam.Effect.ALLOW,
                 actions: [
@@ -294,9 +300,9 @@ export class CdkStack extends Stack {
           })
         }    
     });
-  /*  firehoseRole.addManagedPolicy({
+    firehoseRole.addManagedPolicy({
       managedPolicyArn: 'arn:aws:iam::aws:policy/AWSLambdaExecute',
-    }); */
+    }); 
 
     const firehose = new kinesisfirehose.CfnDeliveryStream(this, 'FirehoseDeliveryStream', {
       deliveryStreamType: 'KinesisStreamAsSource',
@@ -317,7 +323,7 @@ export class CdkStack extends Stack {
         prefix: "businfo/",
         errorOutputPrefix: 'eror/',
         roleArn: firehoseRole.roleArn,
-      /*  processingConfiguration: {
+        processingConfiguration: {
           enabled: true,
           processors: [
               {
@@ -325,12 +331,12 @@ export class CdkStack extends Stack {
                   parameters: [
                       {
                           parameterName: 'LambdaArn',
-                          parameterValue: props.lambda.functionArn
+                          parameterValue: lambdafirehose.functionArn
                       }
                   ]
               }
           ]
-        }, */ 
+        }, 
 
       /*  dataFormatConversionConfiguration: {
           enabled: true,

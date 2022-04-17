@@ -726,6 +726,9 @@
           ],
           "Version": "2012-10-17"
         },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/AWSLambdaExecute"
+        ],
         "Policies": [
           {
             "PolicyDocument": {
@@ -782,6 +785,19 @@
                 },
                 {
                   "Action": [
+                    "lambda:InvokeFunction",
+                    "lambda:GetFunctionConfiguration"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "LimbdaKinesisFirehose925A14CE",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Action": [
                     "glue:GetTable",
                     "glue:GetTableVersion",
                     "glue:GetTableVersions"
@@ -821,6 +837,25 @@
           },
           "ErrorOutputPrefix": "eror/",
           "Prefix": "businfo/",
+          "ProcessingConfiguration": {
+            "Enabled": true,
+            "Processors": [
+              {
+                "Parameters": [
+                  {
+                    "ParameterName": "LambdaArn",
+                    "ParameterValue": {
+                      "Fn::GetAtt": [
+                        "LimbdaKinesisFirehose925A14CE",
+                        "Arn"
+                      ]
+                    }
+                  }
+                ],
+                "Type": "Lambda"
+              }
+            ]
+          },
           "RoleARN": {
             "Fn::GetAtt": [
               "FirehoseRoleAA67C190",
@@ -917,6 +952,15 @@
       "Value": {
         "Fn::GetAtt": [
           "Stream790BDEE4",
+          "Arn"
+        ]
+      }
+    },
+    "LambdaKinesisARN": {
+      "Description": "The arn of lambda for kinesis",
+      "Value": {
+        "Fn::GetAtt": [
+          "LimbdaKinesisFirehose925A14CE",
           "Arn"
         ]
       }
