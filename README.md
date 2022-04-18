@@ -93,7 +93,7 @@ $ cdk deploy
 $ cdk destroy
 ```
 
-CDK Crawler를 초기 설정하는 부분이 있어서, Console에서 작업이 필요합니다. [Deploy 추가 사항](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/deploy.md)을 선택하여, 필요한 작업을 수행합니다.
+Crawler를 초기 설정하는 부분이 있어서, Console에서 일부 작업이 필요합니다. [Deploy 추가 사항](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/deploy.md)에 따라, 필요한 작업을 수행합니다.
 
 ## 시험 및 결과
 
