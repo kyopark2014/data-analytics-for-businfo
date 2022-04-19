@@ -16,5 +16,11 @@ Bus 도착정보를 위한 DynamoDB Table을 생성합니다.
 
 DynamoDB event를 stream 형태로 수신받기 위하여 Kinesis Data Stream을 생성합니다. 
 
+## [Event Stream으로 연결](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/console/kinesis-event-source.md)
+
+Kinesis Data Stream이 DynamoDB의 Event를 수신할 수 있도록 설정합니다. 
+
+
 ## [Amazon S3에 Bucket 생성]
+
 
