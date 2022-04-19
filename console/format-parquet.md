@@ -84,16 +84,12 @@ https://ap-northeast-2.console.aws.amazon.com/firehose/home?region=ap-northeast-
 
 ![noname](https://user-images.githubusercontent.com/52392004/163998341-6e60ac1e-75cb-47dd-a34e-69d15d4ba341.png)
 
-19) 아래와 [Transform and convert records]에서 [Data transformation]으로 [Lambda-for-firehose] 설정되었고, [Convert record format]으로 [s3_businfo]가 설정되었음을 알 수 있습니다.
 
-![noname](https://user-images.githubusercontent.com/52392004/163986988-36836d2c-7a64-4a40-b108-a8f365c78ae2.png)
-
-
-20) 여기까지 설정후 Amazon S3에 가면, 아래와 같이 최신 파일들이 parquet로 변환되고 있음을 알 수 있습니다. 
+19) 여기까지 설정후 Amazon S3에 가면, 아래와 같이 최신 파일들이 parquet로 변환되고 있음을 알 수 있습니다. 
 
 ![noname](https://user-images.githubusercontent.com/52392004/163987360-93b9bbcc-e1f9-43e7-81e7-1ab934cc71ea.png)
 
-21) json 파일과 parquet 파일이 혼재되어 있으므로, 아래와 같이 기존 파일들을 모두 삭제 합니다. 
+20) json 파일과 parquet 파일이 혼재되어 있으므로, 아래와 같이 기존 파일들을 모두 삭제 합니다. 
 
 ![noname](https://user-images.githubusercontent.com/52392004/163987758-83adcd72-e648-40ba-b5b4-3d91bb1b2bfd.png)
 
