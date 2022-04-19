@@ -92,4 +92,4 @@ decording후 결과는 아래와 같습니다.
 
 Lambda for Kinesis의 소스코드는 cdk의 repository에 있으며 URL은 아래와 같습니다. 
 
-https://github.com/kyopark2014/kinesis-data-stream/tree/main/cdk/repositories/get-kinesisinfo
+https://github.com/kyopark2014/data-analytics-for-businfo/tree/main/cdk/repositories/lambda-kinesis-stream
