@@ -83,3 +83,7 @@ https://ap-northeast-2.console.aws.amazon.com/firehose/home?region=ap-northeast-
 
 ![noname](https://user-images.githubusercontent.com/52392004/163986408-7039ed04-5805-4b29-8e84-1444e606c1fd.png)
 
+19) 아래와 [Transform and convert records]에서 [Data transformation]으로 [Lambda-for-firehose] 설정되었고, [Convert record format]으로 [s3_businfo]가 설정되었음을 알 수 있습니다.
+
+![noname](https://user-images.githubusercontent.com/52392004/163986988-36836d2c-7a64-4a40-b108-a8f365c78ae2.png)
+
