@@ -66,4 +66,4 @@ Lambda for firehose를 이용해 Data Translation을 할 수 있도록 설정 �
 
 AWS Glue Data Catalog를 이용하여 json 파일을 Amazon Athena등에서 사용하기 용이하도록 parquet 형식으로 변환합니다. 
 
-
+### 
