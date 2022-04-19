@@ -23,3 +23,7 @@ https://ap-northeast-2.console.aws.amazon.com/events/home?region=ap-northeast-2#
 
 
 ![noname](https://user-images.githubusercontent.com/52392004/163915886-83b71567-c7b1-446f-8cef-52a9cc481d61.png)
+
+7) [Lambda] - [Functions] - [labmda-for-businfo]로 가면 아래와 같이 EventBridge가 설정된것을 확인 할 수 있습니다. 
+
+![noname](https://user-images.githubusercontent.com/52392004/163916331-31e2b17d-29f5-4f48-a94b-2ecbdd35253f.png)
