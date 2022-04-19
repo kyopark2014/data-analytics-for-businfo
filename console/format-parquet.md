@@ -99,3 +99,5 @@ https://ap-northeast-2.console.aws.amazon.com/firehose/home?region=ap-northeast-
 아래와 같이 "permanently delete" 입력하여 해당 S3 bucket을 비워줍니다. 
 
 ![noname](https://user-images.githubusercontent.com/52392004/163987951-258e1d45-53ab-40bd-90a8-ec611211045b.png)
+
+새로 파일들이 생성되는데 시간이 걸리므로 일정시간 기다린후 다시 S3에 진입하여 parquet로 된 파일들만 생성되어 있는지 확인 합니다. 
