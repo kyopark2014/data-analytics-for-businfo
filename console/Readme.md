@@ -20,7 +20,12 @@ DynamoDB event를 stream 형태로 수신받기 위하여 Kinesis Data Stream을
 
 Kinesis Data Stream이 DynamoDB의 Event를 수신할 수 있도록 설정합니다. 
 
+## [Amazon S3에 Bucket 생성](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/console/s3-bucket.md)
 
-## [Amazon S3에 Bucket 생성]
+수집된 데이터를 저장할 수 있도록 Amazon S3에 Bucket을 생성합니다.
+
+## [Kinesis Data Firehose 설정](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/console/kinesis-data-firehose.md)
+
+Kinesis Data Stream으로 부터 stream 데이터를 받을 수 있도록 Delivery stream을 설정합니다. 
 
 
