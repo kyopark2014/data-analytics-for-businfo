@@ -32,8 +32,6 @@ Kinesis Data Stream으로 부터 stream 데이터를 받을 수 있도록 Delive
 
 Cron job을 실행하기 위하여 Amazon EventBrdide에서 Rule을 등록합니다. 
 
-## 중간 결과 
-
 여기까지 진행후 [Amazon S3] - [Buckets] - [s3-businfo]리 이동해서 "businfo"로 시작하는 폴더를 따라가면 아래와 같이 Kinesis Data Firehose가 저장한 event를 확인 할 수 있습니다. 
 
 ![image](https://user-images.githubusercontent.com/52392004/163919326-1e26173e-3cdb-45b2-b105-64643fe63ab9.png)
