@@ -11,5 +11,10 @@ Lambda for Businfo는 센터필드 버스정류장에 도착하는 버스의 정
 
 Bus 도착정보를 위한 DynamoDB Table을 생성합니다. 
 
+
+## [Kinesis Data Stream 생성](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/console/kinesis-data-stream.md)
+
+DynamoDB event를 stream 형태로 수신받기 위하여 Kinesis Data Stream을 생성합니다. 
+
 ## [Amazon S3에 Bucket 생성]
 
