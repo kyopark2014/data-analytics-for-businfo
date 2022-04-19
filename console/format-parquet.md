@@ -64,3 +64,22 @@ https://ap-northeast-2.console.aws.amazon.com/glue/home?region=ap-northeast-2#ca
 15) [AWS Glue] - [Tables]를 선택한 후에 아래와 같이 "s3-businfo"를 선택합니다. 아래와 같이 "timestamp", "routeId"등으로 구성된 Table이 생성되었음을 알 수 있습니다. 
 
 ![noname](https://user-images.githubusercontent.com/52392004/163982331-f30a3007-7816-4376-a971-a038d1291b55.png)
+
+16) Kinesis Data Firehose의 "Delivery streams"에서 기 생성된 stream으로 다시 진입합니다. 
+
+Console의 URL은 아래와 같습니다. 
+
+https://ap-northeast-2.console.aws.amazon.com/firehose/home?region=ap-northeast-2#/streams
+
+아래와 같이 stream을 선택합니다. 
+
+![noname](https://user-images.githubusercontent.com/52392004/163983272-c8a3581c-8b8b-4ab1-95ee-8e4e60165048.png)
+
+17) stream에서 [Configuration]을 선택후 아래처럼 [Edit]를 선택합니다. 
+
+![noname](https://user-images.githubusercontent.com/52392004/163983564-c191fa10-d6f0-4014-a328-51168e94d236.png)
+
+18) 아래와 같이 [Record format conversion]을 "Enabled]를 설명하면 추가 메뉴가 보입니다. 여기에서 [Output format]은 "Apache Parquet"를 선택하고, [AWS Glue region]은 "Asis Pacific (Seoul)"을 선택합니다. [AWS Glue database]에는 "inspector"를 설정하고, [AWS Glue table]에서 [Browse]를 선택하여, "s3_businfo"를 선택하고, [Buffer size]는 128을 입력합니다. 마지막 하단의 [Save changes]를 선택합니다. 
+
+![noname](https://user-images.githubusercontent.com/52392004/163986408-7039ed04-5805-4b29-8e84-1444e606c1fd.png)
+
