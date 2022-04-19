@@ -62,12 +62,8 @@ Lambda for firehose를 이용해 Data Translation을 할 수 있도록 설정 �
 {"timestamp":"1650355371","routeId":"222000073","remainSeatCnt":"44","plateNo":"경기74아3273","predictTime":"11"}{"timestamp":"1650355371","routeId":"222000075","remainSeatCnt":"39","plateNo":"경기74아1370","predictTime":"1"}{"timestamp":"1650355431","routeId":"222000076","remainSeatCnt":"45","plateNo":"경기74아3798","predictTime":"9"}{"timestamp":"1650355491","routeId":"222000075","remainSeatCnt":"39","plateNo":"경기74아1370","predictTime":"1"}{"timestamp":"1650355551","routeId":"222000073","remainSeatCnt":"44","plateNo":"경기74아3273","predictTime":"15"}{"timestamp":"1650355551","routeId":"222000074","remainSeatCnt":"45","plateNo":"경기74아3249","predictTime":"20"}
 ```
 
-### [AWS Glue Data Catalog 설정]
+### [AWS Glue Data Catalog 설정](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/console/format-parquet.md)
 
-AWS Glue Data Catalog를 이용하여 json 파일을 Amazon Athena등에서 사용하기 용이하도록 parquet 형식으로 변경합니다. 
-
-
-
-
+AWS Glue Data Catalog를 이용하여 json 파일을 Amazon Athena등에서 사용하기 용이하도록 parquet 형식으로 변환합니다. 
 
 
