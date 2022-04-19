@@ -39,7 +39,7 @@ https://ap-northeast-2.console.aws.amazon.com/lambda/home?region=ap-northeast-2#
 
 ![noname](https://user-images.githubusercontent.com/52392004/163895907-b984f8e2-0ba2-4776-bb2d-974c5513d690.png)
 
-10) Lambda for businfo가 버스 Open API를 통해 얻어온 정보를 DyanmoDB에 저장하기 위해, Lambda for businfo에 DynamoDB의 Table Nam을 알려주고자 합니다. [Key]에 "tableName"을 입력하고, [Value]에 "businfo"라고 입력한다음 [Save] 합니다. 
+10) Lambda for businfo가 버스 Open API를 통해 얻어온 정보를 DyanmoDB에 저장하기 위해, Lambda for businfo에 DynamoDB의 Table Name을 알려주고자 합니다. [Key]에 "tableName"을 입력하고, [Value]에 "businfo"라고 입력한다음 [Save] 합니다. 
  
 ![noname](https://user-images.githubusercontent.com/52392004/163904803-c5a9dede-3fc4-4b60-803b-e6eec7b4e385.png)
 
