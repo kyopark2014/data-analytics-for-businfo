@@ -1,6 +1,6 @@
 # Data Analytics for Businfo를 Console로 작성하는 방법
 
-여기서는 AWS CDK가 아닌 Console로 인프라를 구성하는 방법에 대해 소개 합니다.
+여기서는 AWS CDK가 아닌 Console로 인프라를 구성하는 방법에 대해 소개 합니다. 아래 순서대로 Console에서 설정시 버스 도착 정보를 수집하기 위한 data analytics 인프라를 구축할 수 있습니다.
 
 ## 1. [Lambda for Businfo](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/console/lambda-for-businfo.md)
 
