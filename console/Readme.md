@@ -28,4 +28,8 @@ Kinesis Data Stream이 DynamoDB의 Event를 수신할 수 있도록 설정합니
 
 Kinesis Data Stream으로 부터 stream 데이터를 받을 수 있도록 Delivery stream을 설정합니다. 
 
+## [EventBridge 설정](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/console/cron.md)
+
+Cron job을 실행하기 위하여 Amazon EventBrdide에서 Rule을 등록합니다. 
+
 
