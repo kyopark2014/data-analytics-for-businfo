@@ -43,3 +43,46 @@ https://ap-northeast-2.console.aws.amazon.com/lambda/home?region=ap-northeast-2#
  
 ![noname](https://user-images.githubusercontent.com/52392004/163904803-c5a9dede-3fc4-4b60-803b-e6eec7b4e385.png)
 
+11) DynamoDB에 저장할 수 있도록 퍼미션을 부여합니다. 아래와 같이 [Configuration] - [Permissions]을 선택후 Role name을 선택합니다. 
+
+![noname](https://user-images.githubusercontent.com/52392004/163917364-826094a9-7771-4221-93ec-b2c3ca8ec720.png)
+
+12) [Permissions policies]에서 Policy name을 선택합니다. 
+
+![noname](https://user-images.githubusercontent.com/52392004/163917562-0961fbb8-c9ff-4306-bbd8-117a970f38e0.png)
+
+13) [Summary]에서 [Edit policy]를 입력합니다. 
+
+![noname](https://user-images.githubusercontent.com/52392004/163917743-01a75d1d-c9eb-4a9d-8442-95b5ac4866e6.png)
+
+14) [JSON] Tab에서 아래와 같이 DynamoDB permission을 추가합니다. 
+
+
+![noname](https://user-images.githubusercontent.com/52392004/163917928-7681ed0d-331f-40b4-8c69-d952fc87cb05.png)
+
+추가되는 Permission은 아래와 같습니다. 
+
+```java
+	{
+            "Effect": "Allow",
+            "Action": [
+              "dynamodb:BatchGetItem",
+              "dynamodb:GetItem",
+              "dynamodb:Scan",
+              "dynamodb:Query",
+              "dynamodb:BatchWriteItem",
+              "dynamodb:PutItem",
+              "dynamodb:UpdateItem",
+              "dynamodb:DeleteItem"
+            ],
+            "Resource": "arn:aws:dynamodb:ap-northeast-2:[Account Number]:table/*"
+	}
+	
+ 
+ 
+
+
+
+
+
+
