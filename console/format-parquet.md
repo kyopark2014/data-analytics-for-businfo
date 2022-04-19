@@ -59,10 +59,6 @@ https://ap-northeast-2.console.aws.amazon.com/glue/home?region=ap-northeast-2#ca
 
 14) [Status]가 Starting -> Stopping -> Ready가 될때까지 기다립니다. 
 
-![noname](https://user-images.githubusercontent.com/52392004/163975149-f84d2d42-e850-46bd-a1d5-020d13f43452.png)
-
-몇분 후에 [Status]가 Ready가 됩니다.
-
 ![noname](https://user-images.githubusercontent.com/52392004/163975324-1c1ed4e4-7687-4522-9eac-958cc3806340.png)
 
 15) 
