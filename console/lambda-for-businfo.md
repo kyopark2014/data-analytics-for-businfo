@@ -77,6 +77,13 @@ https://ap-northeast-2.console.aws.amazon.com/lambda/home?region=ap-northeast-2#
             ],
             "Resource": "arn:aws:dynamodb:ap-northeast-2:[Account Number]:table/*"
 	}
+```
+15) [Review policy]하여 아래와 같이 DynamoDB Permission이 등륵되었는지 확인후 [Save changes]를 선택합니다. 
+
+![image](https://user-images.githubusercontent.com/52392004/163918205-557807d7-d667-4f33-b0a6-f8ff4b7f87fd.png)
+
+
+
 	
  
  
