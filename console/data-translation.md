@@ -19,5 +19,10 @@ https://ap-northeast-2.console.aws.amazon.com/firehose/home?region=ap-northeast-
 5) 설정 후에 다시 Amazon S3의 "s3-businfo" bucket에서 최신으로 저장된 결과를 다운로드하여 보면 아래와 같이 json 파일의 내용이 변경된것을 확인 할 수 있습니다. 
 
 ```java
-{"timestamp":"1650355371","routeId":"222000073","remainSeatCnt":"44","plateNo":"경기74아3273","predictTime":"11"}{"timestamp":"1650355371","routeId":"222000075","remainSeatCnt":"39","plateNo":"경기74아1370","predictTime":"1"}{"timestamp":"1650355431","routeId":"222000076","remainSeatCnt":"45","plateNo":"경기74아3798","predictTime":"9"}{"timestamp":"1650355491","routeId":"222000075","remainSeatCnt":"39","plateNo":"경기74아1370","predictTime":"1"}{"timestamp":"1650355551","routeId":"222000073","remainSeatCnt":"44","plateNo":"경기74아3273","predictTime":"15"}{"timestamp":"1650355551","routeId":"222000074","remainSeatCnt":"45","plateNo":"경기74아3249","predictTime":"20"}
+{"timestamp":"1650355371","routeId":"222000073","remainSeatCnt":"44","plateNo":"경기74아3273","predictTime":"11"}
+{"timestamp":"1650355371","routeId":"222000075","remainSeatCnt":"39","plateNo":"경기74아1370","predictTime":"1"}
+{"timestamp":"1650355431","routeId":"222000076","remainSeatCnt":"45","plateNo":"경기74아3798","predictTime":"9"}
+{"timestamp":"1650355491","routeId":"222000075","remainSeatCnt":"39","plateNo":"경기74아1370","predictTime":"1"}
+{"timestamp":"1650355551","routeId":"222000073","remainSeatCnt":"44","plateNo":"경기74아3273","predictTime":"15"}
+{"timestamp":"1650355551","routeId":"222000074","remainSeatCnt":"45","plateNo":"경기74아3249","predictTime":"20"}
 ```
