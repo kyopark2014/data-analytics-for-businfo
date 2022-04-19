@@ -61,4 +61,7 @@ https://ap-northeast-2.console.aws.amazon.com/glue/home?region=ap-northeast-2#ca
 
 ![noname](https://user-images.githubusercontent.com/52392004/163975324-1c1ed4e4-7687-4522-9eac-958cc3806340.png)
 
-15) 
+15) [AWS Glue] - [Tables]를 선택한 후에 아래와 같이 "s3-businfo"를 선택합니다. 아래와 같이 "timestamp", "routeId"등으로 구성된 Table이 생성되었음을 알 수 있습니다. 
+
+![image](https://user-images.githubusercontent.com/52392004/163982014-b1b2dfa5-801d-404b-95c8-dbc6d24cca84.png)
+
