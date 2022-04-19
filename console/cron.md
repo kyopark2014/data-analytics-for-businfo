@@ -27,3 +27,18 @@ https://ap-northeast-2.console.aws.amazon.com/events/home?region=ap-northeast-2#
 7) [Lambda] - [Functions] - [labmda-for-businfo]로 가면 아래와 같이 EventBridge가 설정된것을 확인 할 수 있습니다. 
 
 ![noname](https://user-images.githubusercontent.com/52392004/163916331-31e2b17d-29f5-4f48-a94b-2ecbdd35253f.png)
+
+
+8) 여기까지 진행후 [Amazon S3] - [Buckets] - [s3-businfo]리 이동해서 "businfo"로 시작하는 폴더를 따라가면 아래와 같이 Kinesis Data Firehose가 저장한 event를 확인 할 수 있습니다. 
+
+![image](https://user-images.githubusercontent.com/52392004/163919326-1e26173e-3cdb-45b2-b105-64643fe63ab9.png)
+
+이 데이터 중에 하나를 Download 하여 text editor로 확인해보면 아래와 같이 json 포맷으로 되어 있음을 확인 할 수 있습니다. 
+
+```java
+{"awsRegion":"ap-northeast-2","eventID":"5f27dab6-0769-4ec9-bc35-ae2289ff63e8","eventName":"INSERT","userIdentity":null,"recordFormat":"application/json","tableName":"businfo",
+"dynamodb":{"ApproximateCreationDateTime":1650341393131,"Keys":{"Timestamp":{"S":"1650341392"},"RouteId":{"S":"222000073"}},"NewImage":{"RemainSeatCnt":{"S":"45"},"Timestamp":{"S":"1650341392"},"PlateNo":{"S":"경기74아3282"},"RouteId":{"S":"222000073"},"PredictTime":{"S":"7"}},"SizeBytes":119},"eventSource":"aws:dynamodb"}{"awsRegion":"ap-northeast-2","eventID":"906ea045-479d-494e-b723-6ece1688c3c3","eventName":"INSERT","userIdentity":null,"recordFormat":"application/json","tableName":"businfo",
+"dynamodb":{"ApproximateCreationDateTime":1650341452389,"Keys":{"Timestamp":{"S":"1650341451"},"RouteId":{"S":"222000073"}},"NewImage":{"RemainSeatCnt":{"S":"45"},"Timestamp":{"S":"1650341451"},"PlateNo":{"S":"경기74아3282"},"RouteId":{"S":"222000073"},"PredictTime":{"S":"7"}},"SizeBytes":119},"eventSource":"aws:dynamodb"}{"awsRegion":"ap-northeast-2","eventID":"4cf85f06-bb27-4856-9b70-1b5bdb3cffe9","eventName":"INSERT","userIdentity":null,"recordFormat":"application/json","tableName":"businfo",
+"dynamodb":{"ApproximateCreationDateTime":1650341631810,"Keys":{"Timestamp":{"S":"1650341631"},"RouteId":{"S":"222000075"}},"NewImage":{"RemainSeatCnt":{"S":"42"},"Timestamp":{"S":"1650341631"},"PlateNo":{"S":"경기74아1380"},"RouteId":{"S":"222000075"},"PredictTime":{"S":"6"}},"SizeBytes":119},"eventSource":"aws:dynamodb"}{"awsRegion":"ap-northeast-2","eventID":"aa4894e7-1414-4d74-91bf-50180f6b4838","eventName":"INSERT","userIdentity":null,"recordFormat":"application/json","tableName":"businfo",
+"dynamodb":{"ApproximateCreationDateTime":1650341691690,"Keys":{"Timestamp":{"S":"1650341691"},"RouteId":{"S":"222000074"}},"NewImage":{"RemainSeatCnt":{"S":"45"},"Timestamp":{"S":"1650341691"},"PlateNo":{"S":"경기74아3244"},"RouteId":{"S":"222000074"},"PredictTime":{"S":"11"}},"SizeBytes":120},"eventSource":"aws:dynamodb"}
+```
