@@ -12,14 +12,15 @@
 
 ## Architecture 구성 
 
-전체적인 구현 Architecture는 아래와 같습니다.
+전체적인 구현 Architecture는 아래와 같으며, 데이터를 저장하는 Data Ingention 부분과 수집된 데이터를 분석에 맞도록 가공하는 Analytics로 크게 나누어지며, 인프라 관리를 위한 AWS CDK와 로깅을 위한 Amazon CloudWatch로 구성됩니다. 여기서 Data Ingestion은 Lambda가 DynamoDB에 저장하는 application으로 가정하였으며, 필요시 DynamoDB 없이 Amazon Kinesis Stream으로 바로 데이터를 수집할 있습니다. 
 
-![image](https://user-images.githubusercontent.com/52392004/163705113-4d9fe08c-c912-49ed-8aba-11f7b1223374.png)
+<img width="671" alt="image" src="https://user-images.githubusercontent.com/52392004/163900458-3599d3bb-0220-4a39-bb98-8b1c782c061d.png">
+
 
 
 주요 사용 시나리오는 아래와 같습니다.
 
-1. Cron job 형태로 Lambda가 Centerfied 버스정류장에 도착하는 버스정보를 정기적으로 조회하여 DynamoDB에 저장합니다.
+1. Cron job 형태로 Lambda가 Centerfied 버스정류장에 도착하는 버스정보를 정기적으로 조회하여 DynamoDB에 저장합니다. 
 
 2. DynomoDB에 INSERT되는 이벤트를 Kinesis Data Stream으로 전달합니다.
 
