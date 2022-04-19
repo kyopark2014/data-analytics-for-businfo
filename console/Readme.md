@@ -66,4 +66,6 @@ Lambda for firehose를 이용해 Data Translation을 할 수 있도록 설정 �
 
 AWS Glue Data Catalog를 이용하여 json 파일을 Amazon Athena등에서 사용하기 용이하도록 parquet 형식으로 변환합니다. 
 
-### 
+### [Amazon Athena를 이용한 분석](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/console/athena.md)
+
+AWS Athena에서 workgroup을 설정하고 query를 시험합니다. 
