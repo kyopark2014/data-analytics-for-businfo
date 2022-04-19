@@ -97,6 +97,8 @@ $ cdk destroy
 
 Crawler를 초기 설정하는 부분이 있어서, Console에서 일부 작업이 필요합니다. [Deploy 추가 사항](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/deploy.md)에 따라, 필요한 작업을 수행합니다.
 
+AWS CDK 사용이 익숙하
+
 ## 시험 및 결과
 
 AWS CDK로 현재 인프라를 deploy하면, Cron Rule에 따라 Lambda가 정기적으로 버스의 실시간 정보를 조회하여 DynamoDB에 저장하고 Amazon Kinesis를 통해 Parquet 형식으로 S3에 저장됩니다. Amazon S3에 저장된 버스 정보는 아래와 같이 확인 할 수 있습니다. 
