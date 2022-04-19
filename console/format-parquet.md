@@ -28,9 +28,10 @@ https://ap-northeast-2.console.aws.amazon.com/glue/home?region=ap-northeast-2#ca
 
 ![noname](https://user-images.githubusercontent.com/52392004/163972770-c2e25551-ed48-4026-a5c3-582ca2ea234b.png)
 
-7) [Add a data store] - [Include path]에서 오른쪽 Directory Icon을 선택하여 S3 생성시 만든 bucket을 선택합니다. 여기서는 "s3-businfo"로 bucket을 생성하였으므로 "s3//s3-businfo"을 선택합니다. 이후 [Next]를 선택합니다. 
+7) [Add a data store] - [Include path]에서 오른쪽 Directory Icon을 선택하여 S3 생성시 만든 bucket을 선택합니다. 여기서는 "s3-businfo"로 bucket을 생성하였으므로 "s3//s3-businfo/businfo2022"을 선택합니다. 이후 [Next]를 선택합니다. 
 
-![noname](https://user-images.githubusercontent.com/52392004/163973390-0c469fc5-6e3b-4e0b-831b-718f7a33e0f4.png)
+![noname](https://user-images.githubusercontent.com/52392004/163997525-019ac029-6f7a-4a21-9c8e-57f1b74c0dc5.png)
+
 
 8) 아래와 같이 [Next]를 선택합니다.
 
