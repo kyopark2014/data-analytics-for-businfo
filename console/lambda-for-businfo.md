@@ -41,4 +41,5 @@ https://ap-northeast-2.console.aws.amazon.com/lambda/home?region=ap-northeast-2#
 
 10) [Key]에 "tableName"입력하고, [Value]에 "s3-businfo"라고 입력하고 [Save] 합니다. 여기서 value에는 원하는 다른 이름을 입력을 하여도 좋습니다.
  
- 
+ ![noname](https://user-images.githubusercontent.com/52392004/163896454-ed2f506e-ee8b-4bb4-823f-3795a06bf6cf.png)
+
