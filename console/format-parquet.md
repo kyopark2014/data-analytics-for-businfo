@@ -1,4 +1,4 @@
-# Parquet 포맷으로 변경을 위한 Glue Data Catalog 
+# Parquet 포맷으로 변경을 위한 Glue Data Catalog 설정 
 
 1) [AWS Glue]의 Database Console로 이동합니다. 
 
