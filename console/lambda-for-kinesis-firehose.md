@@ -50,3 +50,14 @@ https://ap-northeast-2.console.aws.amazon.com/lambda/home?region=ap-northeast-2#
             ]
         }
 ```        
+
+8) [IAM] - [Roles]의 Console로 이동합니다. 
+
+https://us-east-1.console.aws.amazon.com/iamv2/home#/roles
+
+9) Roles에서 "Roles"를 검색하여 "AWSGlueServiceRole-businfo"을 선택합니다. 
+
+![noname](https://user-images.githubusercontent.com/52392004/163978615-7effde57-5ebc-4fe4-a033-60884148ba66.png)
+
+
+10) 
