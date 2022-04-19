@@ -80,9 +80,9 @@ https://ap-northeast-2.console.aws.amazon.com/firehose/home?region=ap-northeast-
 
 ![noname](https://user-images.githubusercontent.com/52392004/163983564-c191fa10-d6f0-4014-a328-51168e94d236.png)
 
-18) 아래와 같이 [Record format conversion]을 "Enabled]를 설명하면 추가 메뉴가 보입니다. 여기에서 [Output format]은 "Apache Parquet"를 선택하고, [AWS Glue region]은 "Asis Pacific (Seoul)"을 선택합니다. [AWS Glue database]에는 "inspector"를 설정하고, [AWS Glue table]에서 [Browse]를 선택하여, "s3_businfo"를 선택하고, [Buffer size]는 128을 입력합니다. 마지막 하단의 [Save changes]를 선택합니다. 
+18) 아래와 같이 [Record format conversion]을 "Enabled]를 설명하면 추가 메뉴가 보입니다. 여기에서 [Output format]은 "Apache Parquet"를 선택하고, [AWS Glue region]은 "Asis Pacific (Seoul)"을 선택합니다. [AWS Glue database]에는 "inspector"를 설정하고, [AWS Glue table]에서 [Browse]를 선택하여, "businfo2022"를 선택하고 마지막 하단의 [Save changes]를 선택합니다. Buffer size 설정이 필요할 경우는 "128"로 설정합니다. 
 
-![noname](https://user-images.githubusercontent.com/52392004/163986408-7039ed04-5805-4b29-8e84-1444e606c1fd.png)
+![noname](https://user-images.githubusercontent.com/52392004/163998341-6e60ac1e-75cb-47dd-a34e-69d15d4ba341.png)
 
 19) 아래와 [Transform and convert records]에서 [Data transformation]으로 [Lambda-for-firehose] 설정되었고, [Convert record format]으로 [s3_businfo]가 설정되었음을 알 수 있습니다.
 
