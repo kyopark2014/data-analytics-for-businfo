@@ -121,20 +121,12 @@ export class CdkStack extends Stack {
     }); 
     rule.addTarget(new targets.LambdaFunction(lambdaBusInfo));
 
-    // kinesis data firehose
-  /*  const logGroup = new logs.LogGroup(this, 'LogGroupKinesis', {
-      logGroupName: 'firehoselog',
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      retention: logs.RetentionDays.ONE_DAY
-    }); */
-
-    // AWS Glue / Crawler
-    const parquetCrawlerRole = new iam.Role(this, "ParquetGlueCrawlerRole", {
-      //assumedBy: new iam.ServicePrincipal("glue.amazonaws.com"),
-      assumedBy: new iam.AnyPrincipal(),
-      description: "Role used by Glue",
+    // To convert record format
+    const parquetRole = new iam.Role(this, "ParquetRole", {
+      assumedBy: new iam.ServicePrincipal("glue.amazonaws.com"),
+      description: "Role for parquet translation",
       inlinePolicies: {
-        'allow-s3-glue-parquet': 
+        'allow-convert-json-to-parquet': 
           new iam.PolicyDocument({
             statements: [
               new iam.PolicyStatement({
@@ -151,8 +143,8 @@ export class CdkStack extends Stack {
                   s3Bucket.bucketArn,
                   s3Bucket.bucketArn + "/*"
                 ]
-              }),
-              new iam.PolicyStatement({   // for AWS glue data catalog (data format conversion)
+              }), 
+              new iam.PolicyStatement({  
                 effect: iam.Effect.ALLOW,
                 actions: [
                   "glue:GetTable",
@@ -161,7 +153,7 @@ export class CdkStack extends Stack {
                 ],
                 resources: ['*'],
               }),  
-              new iam.PolicyStatement({   // for dataFormatConversionConfiguration 
+              new iam.PolicyStatement({  
                 effect: iam.Effect.ALLOW,
                 actions: [
                   "firehose:DeleteDeliveryStream",
@@ -170,7 +162,7 @@ export class CdkStack extends Stack {
                   "firehose:UpdateDestination"
                 ],
                 resources: ['*'],
-              }),
+              }), 
             ]
           })
       },
@@ -178,15 +170,15 @@ export class CdkStack extends Stack {
           iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSGlueServiceRole"),
       ],
     });
-    new cdk.CfnOutput(this, 'parquetCrawlerRoleArn', {
-      value: parquetCrawlerRole.roleArn,
-      description: 'The arn of parquetCrawlerRole',
+    new cdk.CfnOutput(this, 'parquetRoleArn', {
+      value: parquetRole.roleArn,
+      description: 'The arn of parquetRole',
     });
     
     const databaseName = "inspector";
     const crawler = new glue.CfnCrawler(this, "TranslateToParquetGlueCrawler", {
       name: "translate-parquet-crawler",
-      role: parquetCrawlerRole.roleArn,
+      role: parquetRole.roleArn,
       targets: {
           s3Targets: [
               {path: 's3://'+s3Bucket.bucketName}, 
@@ -198,7 +190,7 @@ export class CdkStack extends Stack {
       },      
     });
 
-    
+    // To-Do: how to run crawler trigger
   /*  new glue.CfnTrigger(this, 'CrawlerTrigger', {
       name: 'crawler-trigger',
       type: 'CONDITIONAL',
@@ -221,10 +213,10 @@ export class CdkStack extends Stack {
       }, 
     }); */
 
-    const firehoseRole = new iam.Role(this, 'FirehoseRole', {
+    const firehoseRole = new iam.Role(this, 'TranslationRole', {
       assumedBy: new iam.ServicePrincipal('firehose.amazonaws.com'),
       inlinePolicies: {
-        'allow-s3-kinesis-logs': new iam.PolicyDocument({
+        'allow-lambda-translation': new iam.PolicyDocument({
             statements: [
               new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
@@ -252,14 +244,13 @@ export class CdkStack extends Stack {
                   s3Bucket.bucketArn,
                   s3Bucket.bucketArn + "/*"
                 ]
-              }),
+              }), 
               new iam.PolicyStatement({   // for AWS glue data catalog
                   effect: iam.Effect.ALLOW,
                   actions: [
                     "lambda:InvokeFunction", 
                     "lambda:GetFunctionConfiguration" 
                   ],
-                  // resources: ['*'],
                   resources: [lambdafirehose.functionArn],
                 }),
               new iam.PolicyStatement({   // for AWS glue data catalog (data format conversion)
@@ -271,22 +262,13 @@ export class CdkStack extends Stack {
                 ],
                 resources: ['*'],
               }),                
-            /*  new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "logs:PutLogEvents"
-                ],
-                resources: [
-                  logGroup.logGroupArn
-                ]
-              }) */
             ]
           })
         }    
     });
     firehoseRole.addManagedPolicy({
       managedPolicyArn: 'arn:aws:iam::aws:policy/AWSLambdaExecute',
-    }); 
+    });  
 
     const firehose = new kinesisfirehose.CfnDeliveryStream(this, 'FirehoseDeliveryStream', {
       deliveryStreamType: 'KinesisStreamAsSource',
@@ -322,6 +304,7 @@ export class CdkStack extends Stack {
           ]
         }, 
 
+      // To-Do: how to set file translation format 
       /*  dataFormatConversionConfiguration: {
           enabled: true,
           inputFormatConfiguration: {
@@ -342,7 +325,7 @@ export class CdkStack extends Stack {
           },
           schemaConfiguration: {
             databaseName: databaseName, // Target Glue database name
-            roleArn: parquetCrawlerRole.roleArn,
+            roleArn: parquetRole.roleArn,
             tableName: '01' // Target Glue table name
           }, 
         }, */

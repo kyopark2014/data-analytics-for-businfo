@@ -395,7 +395,7 @@
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
           },
-          "S3Key": "a647df9c1970bf38e0b92b73b681d610772039da261f01f0963ff06e80478a62.zip"
+          "S3Key": "14977179625a06ff7ab3373c285150e52f85eda33c8908a5f7180d95f11e7a58.zip"
         },
         "Role": {
           "Fn::GetAtt": [
@@ -413,7 +413,7 @@
       ],
       "Metadata": {
         "aws:cdk:path": "CdkStack/LimbdaKinesisFirehose/Resource",
-        "aws:asset:path": "asset.a647df9c1970bf38e0b92b73b681d610772039da261f01f0963ff06e80478a62",
+        "aws:asset:path": "asset.14977179625a06ff7ab3373c285150e52f85eda33c8908a5f7180d95f11e7a58",
         "aws:asset:is-bundled": false,
         "aws:asset:property": "Code"
       }
@@ -578,7 +578,7 @@
         "aws:cdk:path": "CdkStack/Cron/AllowEventRuleCdkStackLambdaBusInfo6DA6B5A8"
       }
     },
-    "ParquetGlueCrawlerRole1EF6A24C": {
+    "ParquetRoleDFA9453E": {
       "Type": "AWS::IAM::Role",
       "Properties": {
         "AssumeRolePolicyDocument": {
@@ -587,13 +587,13 @@
               "Action": "sts:AssumeRole",
               "Effect": "Allow",
               "Principal": {
-                "AWS": "*"
+                "Service": "glue.amazonaws.com"
               }
             }
           ],
           "Version": "2012-10-17"
         },
-        "Description": "Role used by Glue",
+        "Description": "Role for parquet translation",
         "ManagedPolicyArns": [
           {
             "Fn::Join": [
@@ -667,12 +667,12 @@
               ],
               "Version": "2012-10-17"
             },
-            "PolicyName": "allow-s3-glue-parquet"
+            "PolicyName": "allow-convert-json-to-parquet"
           }
         ]
       },
       "Metadata": {
-        "aws:cdk:path": "CdkStack/ParquetGlueCrawlerRole/Resource"
+        "aws:cdk:path": "CdkStack/ParquetRole/Resource"
       }
     },
     "TranslateToParquetGlueCrawler": {
@@ -680,7 +680,7 @@
       "Properties": {
         "Role": {
           "Fn::GetAtt": [
-            "ParquetGlueCrawlerRole1EF6A24C",
+            "ParquetRoleDFA9453E",
             "Arn"
           ]
         },
@@ -711,7 +711,7 @@
         "aws:cdk:path": "CdkStack/TranslateToParquetGlueCrawler"
       }
     },
-    "FirehoseRoleAA67C190": {
+    "TranslationRole574EADCA": {
       "Type": "AWS::IAM::Role",
       "Properties": {
         "AssumeRolePolicyDocument": {
@@ -808,12 +808,12 @@
               ],
               "Version": "2012-10-17"
             },
-            "PolicyName": "allow-s3-kinesis-logs"
+            "PolicyName": "allow-lambda-translation"
           }
         ]
       },
       "Metadata": {
-        "aws:cdk:path": "CdkStack/FirehoseRole/Resource"
+        "aws:cdk:path": "CdkStack/TranslationRole/Resource"
       }
     },
     "FirehoseDeliveryStream": {
@@ -858,7 +858,7 @@
           },
           "RoleARN": {
             "Fn::GetAtt": [
-              "FirehoseRoleAA67C190",
+              "TranslationRole574EADCA",
               "Arn"
             ]
           }
@@ -872,7 +872,7 @@
           },
           "RoleARN": {
             "Fn::GetAtt": [
-              "FirehoseRoleAA67C190",
+              "TranslationRole574EADCA",
               "Arn"
             ]
           }
@@ -965,11 +965,11 @@
         ]
       }
     },
-    "parquetCrawlerRoleArn": {
-      "Description": "The arn of parquetCrawlerRole",
+    "parquetRoleArn": {
+      "Description": "The arn of parquetRole",
       "Value": {
         "Fn::GetAtt": [
-          "ParquetGlueCrawlerRole1EF6A24C",
+          "ParquetRoleDFA9453E",
           "Arn"
         ]
       }

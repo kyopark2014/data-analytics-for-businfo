@@ -23,7 +23,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/48a330846ed5374b1a01b77c23277e67ec84d187e83de28bcc1b314841fd11f4.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/e4cee2351666b0e6f7eb546acd7377a179646bc2b913689ceab992441751b3a8.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -191,16 +191,16 @@
             "data": "CronAllowEventRuleCdkStackLambdaBusInfo6DA6B5A8B73586AA"
           }
         ],
-        "/CdkStack/ParquetGlueCrawlerRole/Resource": [
+        "/CdkStack/ParquetRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ParquetGlueCrawlerRole1EF6A24C"
+            "data": "ParquetRoleDFA9453E"
           }
         ],
-        "/CdkStack/parquetCrawlerRoleArn": [
+        "/CdkStack/parquetRoleArn": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "parquetCrawlerRoleArn"
+            "data": "parquetRoleArn"
           }
         ],
         "/CdkStack/TranslateToParquetGlueCrawler": [
@@ -209,10 +209,10 @@
             "data": "TranslateToParquetGlueCrawler"
           }
         ],
-        "/CdkStack/FirehoseRole/Resource": [
+        "/CdkStack/TranslationRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "FirehoseRoleAA67C190"
+            "data": "TranslationRole574EADCA"
           }
         ],
         "/CdkStack/FirehoseDeliveryStream": [
