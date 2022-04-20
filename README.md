@@ -1,6 +1,6 @@
 # Amazon Serverless를 이용한 실시간 버스 정보 수집 및 저장
 
-본 github repository은 버스 정보를 주기적으로 수집하여 분석할 수 있도록, Amazon Serverless인 Amazon Kinesis Data Stream, Kinesis Data Firehose, Lambda, DynamoDB, S3를 이용합니다. 인프라는 IaC(Infrastructure as Code) 툴인 AWS CDK를 이용해 구성합니다. 
+본 github repository는 버스 정보를 주기적으로 수집하여 분석할 수 있도록, Amazon Serverless인 Amazon Kinesis Data Stream, Kinesis Data Firehose, Lambda, DynamoDB, S3를 이용합니다. 인프라는 IaC(Infrastructure as Code) 툴인 AWS CDK를 이용해 구성합니다. 
 
 ## 문제 정의
 
@@ -25,7 +25,7 @@
 
 2. DynomoDB에 INSERT되는 이벤트를 Kinesis Data Stream으로 전달합니다.
 
-3. Kinesis Data Stream이 Queue형태로 저장한 데이터를 Kinesis Firehose가 받아서, 분석에 적합하도록 데이터를 변환 합니다.
+3. Kinesis Data Stream이 Queue형태로 저장한 데이터를 Kinesis Data Firehose가 받아서, 분석에 적합하도록 데이터를 변환 합니다.
 
 4. 변환된 데이터를 분석이 용이하도록 AWS Glue Data Catalog를 이용해 parquet 형식으로 변환하여, S3에 저장합니다.
  
