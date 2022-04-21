@@ -23,7 +23,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/e4cee2351666b0e6f7eb546acd7377a179646bc2b913689ceab992441751b3a8.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/e44cd1bdc54f65730cf5a794b93600a9fc690467b131db65720201b2aea39a01.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -191,16 +191,16 @@
             "data": "CronAllowEventRuleCdkStackLambdaBusInfo6DA6B5A8B73586AA"
           }
         ],
-        "/CdkStack/ParquetRole/Resource": [
+        "/CdkStack/crawlerRole/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "ParquetRoleDFA9453E"
+            "data": "crawlerRoleCB71E89D"
           }
         ],
-        "/CdkStack/parquetRoleArn": [
+        "/CdkStack/crawlerRoleArn": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "parquetRoleArn"
+            "data": "crawlerRoleArn"
           }
         ],
         "/CdkStack/TranslateToParquetGlueCrawler": [

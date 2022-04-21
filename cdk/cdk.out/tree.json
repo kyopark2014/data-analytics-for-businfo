@@ -798,6 +798,7 @@
                         "Arn"
                       ]
                     },
+                    "description": "Lambda for businfo",
                     "environment": {
                       "variables": {
                         "tableName": "dynamodb-businfo"
@@ -883,13 +884,13 @@
               "version": "2.17.0"
             }
           },
-          "ParquetRole": {
-            "id": "ParquetRole",
-            "path": "CdkStack/ParquetRole",
+          "crawlerRole": {
+            "id": "crawlerRole",
+            "path": "CdkStack/crawlerRole",
             "children": {
               "Resource": {
                 "id": "Resource",
-                "path": "CdkStack/ParquetRole/Resource",
+                "path": "CdkStack/crawlerRole/Resource",
                 "attributes": {
                   "aws:cdk:cloudformation:type": "AWS::IAM::Role",
                   "aws:cdk:cloudformation:props": {
@@ -899,7 +900,7 @@
                           "Action": "sts:AssumeRole",
                           "Effect": "Allow",
                           "Principal": {
-                            "Service": "glue.amazonaws.com"
+                            "AWS": "*"
                           }
                         }
                       ],
@@ -957,25 +958,6 @@
                                   ]
                                 }
                               ]
-                            },
-                            {
-                              "Action": [
-                                "glue:GetTable",
-                                "glue:GetTableVersion",
-                                "glue:GetTableVersions"
-                              ],
-                              "Effect": "Allow",
-                              "Resource": "*"
-                            },
-                            {
-                              "Action": [
-                                "firehose:DeleteDeliveryStream",
-                                "firehose:PutRecord",
-                                "firehose:PutRecordBatch",
-                                "firehose:UpdateDestination"
-                              ],
-                              "Effect": "Allow",
-                              "Resource": "*"
                             }
                           ],
                           "Version": "2012-10-17"
@@ -995,9 +977,9 @@
               "version": "2.17.0"
             }
           },
-          "parquetRoleArn": {
-            "id": "parquetRoleArn",
-            "path": "CdkStack/parquetRoleArn",
+          "crawlerRoleArn": {
+            "id": "crawlerRoleArn",
+            "path": "CdkStack/crawlerRoleArn",
             "constructInfo": {
               "fqn": "aws-cdk-lib.CfnOutput",
               "version": "2.17.0"
@@ -1011,7 +993,7 @@
               "aws:cdk:cloudformation:props": {
                 "role": {
                   "Fn::GetAtt": [
-                    "ParquetRoleDFA9453E",
+                    "crawlerRoleCB71E89D",
                     "Arn"
                   ]
                 },
@@ -1025,7 +1007,8 @@
                             "s3://",
                             {
                               "Ref": "cdkbusinfo2C2CF86C"
-                            }
+                            },
+                            "/businfo"
                           ]
                         ]
                       }
@@ -1060,13 +1043,26 @@
                           "Action": "sts:AssumeRole",
                           "Effect": "Allow",
                           "Principal": {
-                            "Service": "firehose.amazonaws.com"
+                            "AWS": "*"
                           }
                         }
                       ],
                       "Version": "2012-10-17"
                     },
+                    "description": "TraslationRole",
                     "managedPolicyArns": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":iam::aws:policy/service-role/AWSGlueServiceRole"
+                          ]
+                        ]
+                      },
                       "arn:aws:iam::aws:policy/AWSLambdaExecute"
                     ],
                     "policies": [
@@ -1130,12 +1126,28 @@
                                 "lambda:GetFunctionConfiguration"
                               ],
                               "Effect": "Allow",
-                              "Resource": {
-                                "Fn::GetAtt": [
-                                  "LimbdaKinesisFirehose925A14CE",
-                                  "Arn"
-                                ]
-                              }
+                              "Resource": [
+                                {
+                                  "Fn::GetAtt": [
+                                    "LimbdaKinesisFirehose925A14CE",
+                                    "Arn"
+                                  ]
+                                },
+                                {
+                                  "Fn::Join": [
+                                    "",
+                                    [
+                                      {
+                                        "Fn::GetAtt": [
+                                          "LimbdaKinesisFirehose925A14CE",
+                                          "Arn"
+                                        ]
+                                      },
+                                      ":*"
+                                    ]
+                                  ]
+                                }
+                              ]
                             },
                             {
                               "Action": [
@@ -1212,6 +1224,19 @@
                         ]
                       }
                     ]
+                  },
+                  "dataFormatConversionConfiguration": {
+                    "enabled": false,
+                    "schemaConfiguration": {
+                      "databaseName": "inspector",
+                      "roleArn": {
+                        "Fn::GetAtt": [
+                          "TranslationRole574EADCA",
+                          "Arn"
+                        ]
+                      },
+                      "tableName": "businfo"
+                    }
                   }
                 },
                 "kinesisStreamSourceConfiguration": {
