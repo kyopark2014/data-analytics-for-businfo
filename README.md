@@ -91,7 +91,7 @@ $ cdk synth
 $ cdk deploy
 ```
 
-AWK CDK로 deploy하면 lambda for businfo가 schedule에 따라 자동으로 실행되어서 버스 도착정보를 수집합니다. 아직 parquet로 포맷 변경하는 옵션을 enable하지 않았으므로, 수집된 데이터는 Amazon S3의 bucket에 아래와 같이 json 포맷으로 저장됩니다. 
+AWK CDK로 deploy하면 lambda for businfo가 schedule에 따라 자동으로 실행되어서 버스 도착정보를 수집합니다. 아직 parquet로 포맷 변경하는 옵션을 enable하지 않았으므로, 수집된 데이터는 Amazon S3의 bucket에 아래와 같이 확장자가 없이 json 포맷으로 저장됩니다. 
 
 ![image](https://user-images.githubusercontent.com/52392004/164419273-428851f2-15c6-4c64-ab4d-95dcc9a0c434.png)
 
