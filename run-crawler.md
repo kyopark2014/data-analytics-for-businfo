@@ -1,4 +1,4 @@
-# Amazon Crawler을 이용한 table 생성 
+# Amazon Crawler을 이용한 변환 table 생성 
 
 ## AWS Glue Crawler 실행
 
