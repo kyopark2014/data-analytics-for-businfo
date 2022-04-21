@@ -140,4 +140,6 @@ Centerfield 버스정류장에서 1분단위로 데이터 수집하였다면, ti
 
 마찬가지 1분단위로 측정하였지만, 구간1의 경우에는 4분, 구간2의 경우에는 2분정도로 빠르게 예상 도착 시간이 줄어들다가 구간3부터는 다시 1분 간격으로 변경되고 있습니다. 이와같이 버스정보 API로 제공되는 도착정보는 어떤 패턴을 가지고 실제와 맞지 않음을 알 수 있습니다. 
 
-![noname](https://user-images.githubusercontent.com/52392004/164481449-6722ebc5-da01-4085-8baa-5f330c3daf43.png)
+![noname](https://user-images.githubusercontent.com/52392004/164482382-287acaef-c7bf-4ee8-a644-6ce6573dccac.png)
+
+
