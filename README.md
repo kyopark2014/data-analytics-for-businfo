@@ -135,3 +135,9 @@ Centerfield 버스정류장에서 1분단위로 데이터 수집하였다면, ti
 
 
 ![noname](https://user-images.githubusercontent.com/52392004/164475030-a1420ab2-bce9-4e1b-9ccc-84a029e334de.png)
+
+## Case Study: 구간별 시간차
+
+마찬가지
+
+![noname](https://user-images.githubusercontent.com/52392004/164481449-6722ebc5-da01-4085-8baa-5f330c3daf43.png)
