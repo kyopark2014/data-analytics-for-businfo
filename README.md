@@ -91,11 +91,11 @@ $ cdk synth
 $ cdk deploy
 ```
 
-상기처럼 AWK CDK로 deploy시 Amazon S3의 bucket에는 json 포맷으로 저장됩니다. parquet로 전환하기 위해서는 crawler로 table을 생성하여야 합니다.
+AWK CDK로 deploy하면 lambda for businfo가 schedule에 따라 자동으로 실행되어서 버스 도착정보를 수집합니다. 아직 parquet로 포맷 변경하는 옵션을 enable하지 않았으므로, 수집된 데이터는 Amazon S3의 bucket에 아래와 같이 json 포맷으로 저장됩니다. 
 
+![image](https://user-images.githubusercontent.com/52392004/164419273-428851f2-15c6-4c64-ab4d-95dcc9a0c434.png)
 
-Crawler를 초기 설정하는 부분이 있어서, Console에서 일부 작업이 필요합니다. [Deploy 추가 사항](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/deploy.md)에 따라, 필요한 작업을 수행합니다.
-
+parquet 포맷으로 변경하기 위해 [Deploy 추가 사항](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/enable-format-translation.md)에 따라, 필요한 작업을 수행합니다.
 
 **인프라 삭제 명령어**
 
