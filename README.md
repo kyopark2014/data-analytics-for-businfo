@@ -80,22 +80,30 @@ AWS CDK로 아래와 같이 Athena Work Group을 설정합니다.
 
 ## 인프라 생성 및 삭제 
 
+1) AWS CDK 사용시
+
 [AWS CDK](https://github.com/kyopark2014/technical-summary/blob/main/cdk-introduction.md)를 이용하여 인프라를 생성할 수 있습니다. 상세한 내용은 [AWS CDK로 Data Ingestion](https://github.com/kyopark2014/data-inggestion-using-kinesis/blob/main/cdk/README.md)을 참고하시기 바랍니다.
 
-인프라 생성 명령어 
+**인프라 생성 명령어**
 
 ```c
 $ cdk synth
 $ cdk deploy
 ```
 
-인프라 삭제 명령어 
+상기처럼 AWK CDK로 deploy시 Amazon S3의 bucket에는 json 포맷으로 저장됩니다. parquet로 전환하기 위해서는 crawler로 table을 생성하여야 합니다.
+
+
+Crawler를 초기 설정하는 부분이 있어서, Console에서 일부 작업이 필요합니다. [Deploy 추가 사항](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/deploy.md)에 따라, 필요한 작업을 수행합니다.
+
+
+**인프라 삭제 명령어**
 
 ```c
 $ cdk destroy
 ```
 
-Crawler를 초기 설정하는 부분이 있어서, Console에서 일부 작업이 필요합니다. [Deploy 추가 사항](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/deploy.md)에 따라, 필요한 작업을 수행합니다.
+2) Console에서 생성시 
 
 AWS CDK 사용이 익숙하지 않은 경우에 Console에서도 인프라 생성이 가능합니다. [Console 에서 인프라 생성](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/console/Readme.md)을 참고하시기 바랍니다.
 
