@@ -127,3 +127,10 @@ Athena 조회시 아래와 같이 S3에 csv, meta 파일을 생성됨을 확인 
 아래는 생성된 csv에 저장된 데이터의 예 입니다. 
 
 <img width="818" alt="image" src="https://user-images.githubusercontent.com/52392004/163711367-be6c51a4-5300-4bc7-919a-481373dceeac.png">
+
+
+## Case Study: 지연 
+
+Centerfield 버스 Center
+## Case Study: 지연 
+![noname](https://user-images.githubusercontent.com/52392004/164475030-a1420ab2-bce9-4e1b-9ccc-84a029e334de.png)
