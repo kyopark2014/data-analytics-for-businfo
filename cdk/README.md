@@ -200,11 +200,6 @@ Amazon Kinesis Datahose를 아래와 같이 선언합니다. S3에 저장할때�
         // to set file translation format 
         dataFormatConversionConfiguration: {          
           enabled: false,
-          schemaConfiguration: {
-            databaseName: glueDatabaseName, // Target Glue database name
-            roleArn: translationRole.roleArn,
-            tableName: 'businfo' // Target Glue table name
-          }, 
         }, 
       }
     });      
