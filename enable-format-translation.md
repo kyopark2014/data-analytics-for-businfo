@@ -9,7 +9,8 @@ https://ap-northeast-2.console.aws.amazon.com/firehose/home?region=ap-northeast-
 
 2) 아래로 스크롤하여 [Transform and convert records]에서 [Edit]를 선택합니다. 
 
-![noname](https://user-images.githubusercontent.com/52392004/163696563-e1f06714-00d7-4117-ab5b-3658d59fd698.png)
+![noname](https://user-images.githubusercontent.com/52392004/164429427-fda37b45-42d1-49e1-bbeb-0495898c6e45.png)
+
 
 3) [Record format conversion]을 "Enable"로 설정하고, [Output format]을 "Apache Parquet"를 선택합니다. 
 
