@@ -1,7 +1,7 @@
 
 # Parquet으로 포맷 변경 시작
 
-1) [Amazon Kinesis] - [Delivery streams]로 진입하여, "CdkStack-FirehoseDeliveryStream-Y7moKLyU54iD"을 선택합니다.
+1) [Amazon Kinesis] - [Delivery streams]로 진입하여, "CdkStack-LimbdaKinesisFirehose925A14CE-2NEPT7t1XACq"을 선택합니다.
 
 https://ap-northeast-2.console.aws.amazon.com/firehose/home?region=ap-northeast-2#/streams
 
