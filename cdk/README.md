@@ -40,14 +40,71 @@ Amazon Kinesis Data Stream을 아래와 같이 선언합니다. 또한 matic도 
     stream.metricPutRecordSuccess();
 ```
 
-Amazon Kinesis Firehose를 선언하기 전에 Role을 설정하여야 합니다. Amazon S3에 저장하기 위한 Permission과 Amazon Kinesis Data Stream에 접근하기 위한 Permission을 정의하여야 합니다. 
+parquet형식으로 변환을 위해서는 crawler로 table을 생성하여야 합니다. 아래와 같이 crawler를 위한 permission을 설정합니다. 
 
 ```java
-    // kinesis firehose
-    const firehoseRole = new iam.Role(this, 'FirehoseRole', {
-      assumedBy: new iam.ServicePrincipal('firehose.amazonaws.com'),
+    const crawlerRole = new iam.Role(this, "crawlerRole", {
+      assumedBy: new iam.AnyPrincipal(),
+      description: "Role for parquet translation",
       inlinePolicies: {
-        'allow-s3-kinesis-logs': new iam.PolicyDocument({
+        'allow-convert-json-to-parquet': 
+          new iam.PolicyDocument({
+            statements: [
+              new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                actions: [
+                  "s3:AbortMultipartUpload",
+                  "s3:GetBucketLocation",
+                  "s3:GetObject",
+                  "s3:ListBucket",
+                  "s3:ListBucketMultipartUploads",
+                  "s3:PutObject"
+                ],
+                resources: [                  
+                  s3Bucket.bucketArn,
+                  s3Bucket.bucketArn + "/*"
+                ]
+              }), 
+            ]
+          })
+      },
+      managedPolicies: [
+          iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSGlueServiceRole"),
+      ],
+    });
+    new cdk.CfnOutput(this, 'crawlerRoleArn', {
+      value: crawlerRole.roleArn,
+      description: 'The arn of crawlerRole',
+    });
+```
+
+아래와 같이 crawler를 설정합니다. 
+
+```java
+    const glueDatabaseName = "inspector";
+    const crawler = new glue.CfnCrawler(this, "TranslateToParquetGlueCrawler", {
+      name: "translate-parquet-crawler",
+      role: crawlerRole.roleArn,
+      targets: {
+          s3Targets: [
+              {path: 's3://'+s3Bucket.bucketName+'/businfo'}, 
+          ]
+      },
+      databaseName: glueDatabaseName,
+      schemaChangePolicy: {
+          deleteBehavior: 'DELETE_FROM_DATABASE'
+      },      
+    });
+```    
+
+포맷 변경을 위한 permission을 정의 합니다. 
+
+```java
+    const translationRole = new iam.Role(this, 'TranslationRole', {
+      assumedBy: new iam.AnyPrincipal(),
+      description: 'TraslationRole',
+      inlinePolicies: {
+        'allow-lambda-translation': new iam.PolicyDocument({
             statements: [
               new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
@@ -64,47 +121,93 @@ Amazon Kinesis Firehose를 선언하기 전에 Role을 설정하여야 합니다
               new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
                 actions: [
-                  "s3:GetObject*",
-                  "s3:GetBucket*",
-                  "s3:List*",
-                  "s3:DeleteObject*",
-                  "s3:PutObject*",
-                  "s3:Abort*"
+                  "s3:AbortMultipartUpload",
+                  "s3:GetBucketLocation",
+                  "s3:GetObject",
+                  "s3:ListBucket",
+                  "s3:ListBucketMultipartUploads",
+                  "s3:PutObject"
                 ],
                 resources: [
                   s3Bucket.bucketArn,
-                      s3Bucket.bucketArn + "/*"
-                    ]
+                  s3Bucket.bucketArn + "/*"
+                ]
+              }), 
+              new iam.PolicyStatement({   
+                effect: iam.Effect.ALLOW,
+                actions: [
+                  "lambda:InvokeFunction", 
+                  "lambda:GetFunctionConfiguration", 
+                ],
+                resources: [
+                  lambdafirehose.functionArn, 
+                  lambdafirehose.functionArn+':*'],
                 }),
+              new iam.PolicyStatement({   
+                effect: iam.Effect.ALLOW,
+                actions: [
+                  "glue:GetTable",
+                  "glue:GetTableVersion",
+                  "glue:GetTableVersions"
+                ],
+                resources: ['*'],
+              }),                
             ]
           })
-        }    
+        },
+        managedPolicies: [
+          iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSGlueServiceRole"),
+        ], 
     });
+    translationRole.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/AWSLambdaExecute',
+    });  
 ```
 
+
 Amazon Kinesis Datahose를 아래와 같이 선언합니다. S3에 저장할때의 configuration과 압축 설정, S3에 저장할때 사용할 prefix등을 정의합니다. 
+
 ```java
     const firehose = new kinesisfirehose.CfnDeliveryStream(this, 'FirehoseDeliveryStream', {
       deliveryStreamType: 'KinesisStreamAsSource',
       kinesisStreamSourceConfiguration: {
         kinesisStreamArn: stream.streamArn,
-        roleArn: firehoseRole.roleArn,
-      },
-      s3DestinationConfiguration: {
+        roleArn: translationRole.roleArn,
+      },      
+      extendedS3DestinationConfiguration: {
         bucketArn: s3Bucket.bucketArn,
         bufferingHints: {
           intervalInSeconds: 60,
-          sizeInMBs: 5
+          sizeInMBs: 128    // mininum 64MBs at data format conversion 
         },
-        compressionFormat: 'UNCOMPRESSED', // GZIP
+        compressionFormat: 'UNCOMPRESSED', // GZIP, SNAPPY
         encryptionConfiguration: {
           noEncryptionConfig: "NoEncryption"
         },
         prefix: "businfo/",
         errorOutputPrefix: 'eror/',
-        roleArn: firehoseRole.roleArn
-      }, 
-    });  
+        roleArn: translationRole.roleArn,
+        processingConfiguration: {
+          enabled: true,
+          processors: [{
+            type: 'Lambda',
+              parameters: [{
+              parameterName: 'LambdaArn',
+              parameterValue: lambdafirehose.functionArn
+            }]
+          }]
+        }, 
+        // to set file translation format 
+        dataFormatConversionConfiguration: {          
+          enabled: false,
+          schemaConfiguration: {
+            databaseName: glueDatabaseName, // Target Glue database name
+            roleArn: translationRole.roleArn,
+            tableName: 'businfo' // Target Glue table name
+          }, 
+        }, 
+      }
+    });      
 ```
 
 Amazon DynamoDB를 정의하고, 변경내역을 stream으로 Kinesis에 전달하도록 합니다. 
@@ -160,4 +263,17 @@ Lambda에서 주기적으로 버스정보를 읽어 올 수 있도록, 아래와
       startingPosition: lambda.StartingPosition.TRIM_HORIZON,
     });
     lambdakinesis.addEventSource(eventSource);  
+```    
+
+Amazon Athena를 위한 workgroup을 아래와 같이 선언합니다. 
+
+```java
+    new athena.CfnWorkGroup(this, 'analytics-athena-workgroup', {
+      name: `businfo-workgroup`,
+      workGroupConfiguration: {
+        resultConfiguration: {
+          outputLocation: `s3://${s3Bucket.bucketName}`,
+        },
+      },
+    })
 ```    
