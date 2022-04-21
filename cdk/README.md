@@ -46,32 +46,25 @@ parquet형식으로 변환을 위해서는 crawler로 table을 생성하여야 �
     const crawlerRole = new iam.Role(this, "crawlerRole", {
       assumedBy: new iam.AnyPrincipal(),
       description: "Role for parquet translation",
-      inlinePolicies: {
-        'allow-convert-json-to-parquet': 
-          new iam.PolicyDocument({
-            statements: [
-              new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "s3:AbortMultipartUpload",
-                  "s3:GetBucketLocation",
-                  "s3:GetObject",
-                  "s3:ListBucket",
-                  "s3:ListBucketMultipartUploads",
-                  "s3:PutObject"
-                ],
-                resources: [                  
-                  s3Bucket.bucketArn,
-                  s3Bucket.bucketArn + "/*"
-                ]
-              }), 
-            ]
-          })
-      },
-      managedPolicies: [
-          iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSGlueServiceRole"),
-      ],
     });
+    crawlerRole.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole',
+    });  
+    crawlerRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "s3:AbortMultipartUpload",
+        "s3:GetBucketLocation",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:ListBucketMultipartUploads",
+        "s3:PutObject"
+      ],
+      resources: [
+        s3Bucket.bucketArn,
+        s3Bucket.bucketArn + "/*"
+      ],
+    }));
     new cdk.CfnOutput(this, 'crawlerRoleArn', {
       value: crawlerRole.roleArn,
       description: 'The arn of crawlerRole',
@@ -103,65 +96,50 @@ parquet형식으로 변환을 위해서는 crawler로 table을 생성하여야 �
     const translationRole = new iam.Role(this, 'TranslationRole', {
       assumedBy: new iam.AnyPrincipal(),
       description: 'TraslationRole',
-      inlinePolicies: {
-        'allow-lambda-translation': new iam.PolicyDocument({
-            statements: [
-              new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "kinesis:DescribeStream",
-                  "kinesis:DescribeStreamSummary",
-                  "kinesis:GetRecords",
-                  "kinesis:GetShardIterator",
-                  "kinesis:ListShards",
-                  "kinesis:SubscribeToShard"
-                ],
-                resources: [stream.streamArn]
-              }),
-              new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "s3:AbortMultipartUpload",
-                  "s3:GetBucketLocation",
-                  "s3:GetObject",
-                  "s3:ListBucket",
-                  "s3:ListBucketMultipartUploads",
-                  "s3:PutObject"
-                ],
-                resources: [
-                  s3Bucket.bucketArn,
-                  s3Bucket.bucketArn + "/*"
-                ]
-              }), 
-              new iam.PolicyStatement({   
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "lambda:InvokeFunction", 
-                  "lambda:GetFunctionConfiguration", 
-                ],
-                resources: [
-                  lambdafirehose.functionArn, 
-                  lambdafirehose.functionArn+':*'],
-                }),
-              new iam.PolicyStatement({   
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "glue:GetTable",
-                  "glue:GetTableVersion",
-                  "glue:GetTableVersions"
-                ],
-                resources: ['*'],
-              }),                
-            ]
-          })
-        },
-        managedPolicies: [
-          iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSGlueServiceRole"),
-        ], 
     });
     translationRole.addManagedPolicy({
       managedPolicyArn: 'arn:aws:iam::aws:policy/AWSLambdaExecute',
     });  
+    translationRole.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole',
+    });
+    translationRole.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole',
+    });
+    translationRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "s3:AbortMultipartUpload",
+        "s3:GetBucketLocation",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:ListBucketMultipartUploads",
+        "s3:PutObject"
+      ],
+      resources: [
+        s3Bucket.bucketArn,
+        s3Bucket.bucketArn + "/*"
+      ],
+    }));
+    translationRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "lambda:InvokeFunction", 
+        "lambda:GetFunctionConfiguration", 
+      ],
+      resources: [
+        lambdafirehose.functionArn, 
+        lambdafirehose.functionArn+':*'],
+    }));
+    translationRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "glue:GetTable",
+        "glue:GetTableVersion",
+        "glue:GetTableVersions"
+      ],
+      resources: ['*'],
+    }));  
 ```
 
 
@@ -200,6 +178,11 @@ Amazon Kinesis Datahose를 아래와 같이 선언합니다. S3에 저장할때�
         // to set file translation format 
         dataFormatConversionConfiguration: {          
           enabled: false,
+          schemaConfiguration: {
+            databaseName: glueDatabaseName, // Target Glue database name
+            roleArn: translationRole.roleArn,
+            tableName: 'businfo' // Target Glue table name
+          }, 
         }, 
       }
     });      
