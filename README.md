@@ -87,6 +87,7 @@ AWS CDK로 아래와 같이 Athena Work Group을 설정합니다.
 **인프라 생성 명령어**
 
 ```c
+$ cdk bootstrap aws://[account number]/ap-northeast-2
 $ cdk synth
 $ cdk deploy
 ```
