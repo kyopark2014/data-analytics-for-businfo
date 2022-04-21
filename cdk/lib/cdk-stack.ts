@@ -47,7 +47,6 @@ export class CdkStack extends Stack {
       retentionPeriod: cdk.Duration.hours(48),
       streamMode: kinesisstream.StreamMode.ON_DEMAND
     });
-
     new cdk.CfnOutput(this, 'StreamARN', {
       value: stream.streamArn,
       description: 'The arn of kinesis stream',
@@ -64,8 +63,6 @@ export class CdkStack extends Stack {
         partitionKey: { name: 'RouteId', type: dynamodb.AttributeType.STRING },
         sortKey: { name: 'Timestamp', type: dynamodb.AttributeType.STRING },
         billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-        // readCapacity: 1,
-        // writeCapacity: 1,
         removalPolicy: cdk.RemovalPolicy.DESTROY,
         //timeToLiveAttribute: 'ttl',
         kinesisStream: stream,
@@ -116,42 +113,36 @@ export class CdkStack extends Stack {
     });  
     dataTable.grantReadWriteData(lambdaBusInfo);
 
+    // cron job - EventBridge
     const rule = new events.Rule(this, 'Cron', {
       description: "Schedule a Lambda to save arrival time of buses",
       schedule: events.Schedule.expression('rate(1 minute)'),
     }); 
     rule.addTarget(new targets.LambdaFunction(lambdaBusInfo));
 
-    // To make a table by crawler 
+    // generate a table by crawler 
     const crawlerRole = new iam.Role(this, "crawlerRole", {
       assumedBy: new iam.AnyPrincipal(),
       description: "Role for parquet translation",
-      inlinePolicies: {
-        'allow-convert-json-to-parquet': 
-          new iam.PolicyDocument({
-            statements: [
-              new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "s3:AbortMultipartUpload",
-                  "s3:GetBucketLocation",
-                  "s3:GetObject",
-                  "s3:ListBucket",
-                  "s3:ListBucketMultipartUploads",
-                  "s3:PutObject"
-                ],
-                resources: [                  
-                  s3Bucket.bucketArn,
-                  s3Bucket.bucketArn + "/*"
-                ]
-              }), 
-            ]
-          })
-      },
-      managedPolicies: [
-          iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSGlueServiceRole"),
-      ],
     });
+    crawlerRole.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole',
+    });  
+    crawlerRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "s3:AbortMultipartUpload",
+        "s3:GetBucketLocation",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:ListBucketMultipartUploads",
+        "s3:PutObject"
+      ],
+      resources: [
+        s3Bucket.bucketArn,
+        s3Bucket.bucketArn + "/*"
+      ],
+    }));
     new cdk.CfnOutput(this, 'crawlerRoleArn', {
       value: crawlerRole.roleArn,
       description: 'The arn of crawlerRole',
@@ -177,65 +168,50 @@ export class CdkStack extends Stack {
     const translationRole = new iam.Role(this, 'TranslationRole', {
       assumedBy: new iam.AnyPrincipal(),
       description: 'TraslationRole',
-      inlinePolicies: {
-        'allow-lambda-translation': new iam.PolicyDocument({
-            statements: [
-              new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "kinesis:DescribeStream",
-                  "kinesis:DescribeStreamSummary",
-                  "kinesis:GetRecords",
-                  "kinesis:GetShardIterator",
-                  "kinesis:ListShards",
-                  "kinesis:SubscribeToShard"
-                ],
-                resources: [stream.streamArn]
-              }),
-              new iam.PolicyStatement({
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "s3:AbortMultipartUpload",
-                  "s3:GetBucketLocation",
-                  "s3:GetObject",
-                  "s3:ListBucket",
-                  "s3:ListBucketMultipartUploads",
-                  "s3:PutObject"
-                ],
-                resources: [
-                  s3Bucket.bucketArn,
-                  s3Bucket.bucketArn + "/*"
-                ]
-              }), 
-              new iam.PolicyStatement({   
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "lambda:InvokeFunction", 
-                  "lambda:GetFunctionConfiguration", 
-                ],
-                resources: [
-                  lambdafirehose.functionArn, 
-                  lambdafirehose.functionArn+':*'],
-                }),
-              new iam.PolicyStatement({   
-                effect: iam.Effect.ALLOW,
-                actions: [
-                  "glue:GetTable",
-                  "glue:GetTableVersion",
-                  "glue:GetTableVersions"
-                ],
-                resources: ['*'],
-              }),                
-            ]
-          })
-        },
-        managedPolicies: [
-          iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSGlueServiceRole"),
-        ], 
     });
     translationRole.addManagedPolicy({
       managedPolicyArn: 'arn:aws:iam::aws:policy/AWSLambdaExecute',
     });  
+    translationRole.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole',
+    });
+    translationRole.addManagedPolicy({
+      managedPolicyArn: 'arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole',
+    });
+    translationRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "s3:AbortMultipartUpload",
+        "s3:GetBucketLocation",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:ListBucketMultipartUploads",
+        "s3:PutObject"
+      ],
+      resources: [
+        s3Bucket.bucketArn,
+        s3Bucket.bucketArn + "/*"
+      ],
+    }));
+    translationRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "lambda:InvokeFunction", 
+        "lambda:GetFunctionConfiguration", 
+      ],
+      resources: [
+        lambdafirehose.functionArn, 
+        lambdafirehose.functionArn+':*'],
+    }));
+    translationRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "glue:GetTable",
+        "glue:GetTableVersion",
+        "glue:GetTableVersions"
+      ],
+      resources: ['*'],
+    }));
 
     const firehose = new kinesisfirehose.CfnDeliveryStream(this, 'FirehoseDeliveryStream', {
       deliveryStreamType: 'KinesisStreamAsSource',
@@ -268,6 +244,11 @@ export class CdkStack extends Stack {
         }, 
         dataFormatConversionConfiguration: {          
           enabled: false, 
+          schemaConfiguration: {
+            databaseName: glueDatabaseName, // Target Glue database name
+            roleArn: translationRole.roleArn,
+            tableName: 'businfo' // Target Glue table name
+          }, 
         }, 
       }
     });      
