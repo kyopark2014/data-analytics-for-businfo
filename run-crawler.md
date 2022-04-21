@@ -12,9 +12,11 @@ https://ap-northeast-2.console.aws.amazon.com/glue/home?region=ap-northeast-2#ca
 
 ![noname](https://user-images.githubusercontent.com/52392004/163696272-61c7daa9-a4d4-4849-9010-b0d15e463ea1.png)
 
-3) [AWS Glue] - [Databases] - [Tables]를 선택하면 아래와 같이 "cdkstack_cdkbusinfo2c2cf86c_1qgef8o3uv1x7"이 생성되었음을 다시 확인합니다. 
+3) [AWS Glue] - [Databases] - [Tables]를 선택하여, 아래와 같이 "businfo"로 Table이 생성되었음을 확인합니다. 
 
-![noname](https://user-images.githubusercontent.com/52392004/163696471-7e701a87-0768-44ea-9a59-7faa5cfd33f4.png)
+![noname](https://user-images.githubusercontent.com/52392004/164422093-528f3e1a-5483-4800-b982-6786bc8b94c5.png)
+
+
 
 4) [Amazon Kinesis] - [Delivery streams]로 진입하여, "CdkStack-FirehoseDeliveryStream-Y7moKLyU54iD"을 선택합니다.
 
