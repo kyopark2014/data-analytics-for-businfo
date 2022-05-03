@@ -16,7 +16,7 @@
 
 아래의 Data Ingestion에 해당하는 Amzaon Lambda와 Amazon DynamoDB 조합은, 필요시 다른 API를 이용해 DynamoDB에 저장된 이력들을 조회 가능하도록 구현하였으나, 이련 용도 없이 단순히 데이터 수집 용도로만 사용시에는 DynamoDB 없이 Lambda로 부터 Amazon Kinesis Stream을 통해 바로 데이터를 수집 할 수 있습니다. 
 
-<img width="721" alt="image" src="https://user-images.githubusercontent.com/52392004/166449315-be0a60b2-bc4c-4b44-8ac5-7e8a95a4d09c.png">
+<img width="723" alt="image" src="https://user-images.githubusercontent.com/52392004/166449479-e404f69b-f0dd-495a-87ef-998b7ad860b7.png">
 
 
 주요 사용 시나리오는 아래와 같습니다.
