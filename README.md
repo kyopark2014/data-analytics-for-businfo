@@ -101,6 +101,10 @@ AWK CDK로 deploy하면 lambda for businfo가 schedule에 따라 자동으로 �
 ```c
 $ cdk destroy
 ```
+json 파일이 수집된 후에 [Table 생성(Crawler)](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/run-crawler.md)을 참조하여 crawler를 run하여 변환을 위한 table을 생성합니다.  
+
+table이 생성되면, parquet 포맷으로 변경하기 위해서 [Deploy 추가 사항](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/enable-format-translation.md)을 참조하여 parquet로 변환을 시작합니다. 
+
 
 2) Console에서 생성시 
 
