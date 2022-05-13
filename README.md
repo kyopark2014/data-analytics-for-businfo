@@ -16,8 +16,7 @@
 
 아래의 Data Ingestion에 해당하는 Amzaon Lambda와 Amazon DynamoDB 조합은, 필요시 다른 API를 이용해 DynamoDB에 저장된 이력들을 조회 가능하도록 구현하였으나, 이련 용도 없이 단순히 데이터 수집 용도로만 사용시에는 DynamoDB 없이 Lambda로 부터 Amazon Kinesis Stream을 통해 바로 데이터를 수집 할 수 있습니다. 
 
-<img width="806" alt="image" src="https://user-images.githubusercontent.com/52392004/164125495-7a1c8057-b8e9-4ef0-882a-8516d3721c62.png">
-
+<img width="722" alt="image" src="https://user-images.githubusercontent.com/52392004/166449582-59e65858-615a-4600-9f17-b03f60f20e2c.png">
 
 주요 사용 시나리오는 아래와 같습니다.
 
@@ -135,3 +134,11 @@ Centerfield 버스정류장에서 1분단위로 데이터 수집하였다면, ti
 
 
 ![noname](https://user-images.githubusercontent.com/52392004/164475030-a1420ab2-bce9-4e1b-9ccc-84a029e334de.png)
+
+## Case Study: 구간별 시간차
+
+마찬가지 1분단위로 측정하였지만, 1)의 경우에는 4분, 2)의 경우에는 2분정도로 빠르게 예상 도착 시간이 줄어들다가 3)부터는 다시 1분 간격으로 변경되고 있습니다. 이와같이 버스정보 API로 제공되는 도착정보는 어떤 패턴을 가지고 실제와 맞지 않음을 알 수 있습니다. 이 경우에 대략 10분 정도 버스가 빨리 도착하였으므로, 1)에서 23분이 남았다고 생각하여 천천히 이동해서, 20분쯤 후에 Centerfield 버스 정류장에 도착하였다면 이미 버스는 지나갔음을 알 수 있습니다.  
+
+![noname](https://user-images.githubusercontent.com/52392004/164482382-287acaef-c7bf-4ee8-a644-6ce6573dccac.png)
+
+
