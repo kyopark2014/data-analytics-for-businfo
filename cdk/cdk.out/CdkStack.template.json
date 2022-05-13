@@ -588,7 +588,7 @@
               "Action": "sts:AssumeRole",
               "Effect": "Allow",
               "Principal": {
-                "AWS": "*"
+                "Service": "glue.amazonaws.com"
               }
             }
           ],
@@ -596,65 +596,63 @@
         },
         "Description": "Role for parquet translation",
         "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition"
-                },
-                ":iam::aws:policy/service-role/AWSGlueServiceRole"
-              ]
-            ]
-          }
-        ],
-        "Policies": [
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Action": [
-                    "s3:AbortMultipartUpload",
-                    "s3:GetBucketLocation",
-                    "s3:GetObject",
-                    "s3:ListBucket",
-                    "s3:ListBucketMultipartUploads",
-                    "s3:PutObject"
-                  ],
-                  "Effect": "Allow",
-                  "Resource": [
-                    {
-                      "Fn::GetAtt": [
-                        "cdkbusinfo2C2CF86C",
-                        "Arn"
-                      ]
-                    },
-                    {
-                      "Fn::Join": [
-                        "",
-                        [
-                          {
-                            "Fn::GetAtt": [
-                              "cdkbusinfo2C2CF86C",
-                              "Arn"
-                            ]
-                          },
-                          "/*"
-                        ]
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "Version": "2012-10-17"
-            },
-            "PolicyName": "allow-convert-json-to-parquet"
-          }
+          "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
         ]
       },
       "Metadata": {
         "aws:cdk:path": "CdkStack/crawlerRole/Resource"
+      }
+    },
+    "crawlerRoleDefaultPolicy7109B2A3": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:AbortMultipartUpload",
+                "s3:GetBucketLocation",
+                "s3:GetObject",
+                "s3:ListBucket",
+                "s3:ListBucketMultipartUploads",
+                "s3:PutObject"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "cdkbusinfo2C2CF86C",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "cdkbusinfo2C2CF86C",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "crawlerRoleDefaultPolicy7109B2A3",
+        "Roles": [
+          {
+            "Ref": "crawlerRoleCB71E89D"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "CdkStack/crawlerRole/DefaultPolicy/Resource"
       }
     },
     "TranslateToParquetGlueCrawler": {
@@ -703,7 +701,7 @@
               "Action": "sts:AssumeRole",
               "Effect": "Allow",
               "Principal": {
-                "AWS": "*"
+                "Service": "firehose.amazonaws.com"
               }
             }
           ],
@@ -711,121 +709,103 @@
         },
         "Description": "TraslationRole",
         "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition"
-                },
-                ":iam::aws:policy/service-role/AWSGlueServiceRole"
-              ]
-            ]
-          },
-          "arn:aws:iam::aws:policy/AWSLambdaExecute"
-        ],
-        "Policies": [
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Action": [
-                    "kinesis:DescribeStream",
-                    "kinesis:DescribeStreamSummary",
-                    "kinesis:GetRecords",
-                    "kinesis:GetShardIterator",
-                    "kinesis:ListShards",
-                    "kinesis:SubscribeToShard"
-                  ],
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::GetAtt": [
-                      "Stream790BDEE4",
-                      "Arn"
-                    ]
-                  }
-                },
-                {
-                  "Action": [
-                    "s3:AbortMultipartUpload",
-                    "s3:GetBucketLocation",
-                    "s3:GetObject",
-                    "s3:ListBucket",
-                    "s3:ListBucketMultipartUploads",
-                    "s3:PutObject"
-                  ],
-                  "Effect": "Allow",
-                  "Resource": [
-                    {
-                      "Fn::GetAtt": [
-                        "cdkbusinfo2C2CF86C",
-                        "Arn"
-                      ]
-                    },
-                    {
-                      "Fn::Join": [
-                        "",
-                        [
-                          {
-                            "Fn::GetAtt": [
-                              "cdkbusinfo2C2CF86C",
-                              "Arn"
-                            ]
-                          },
-                          "/*"
-                        ]
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "Action": [
-                    "lambda:InvokeFunction",
-                    "lambda:GetFunctionConfiguration"
-                  ],
-                  "Effect": "Allow",
-                  "Resource": [
-                    {
-                      "Fn::GetAtt": [
-                        "LimbdaKinesisFirehose925A14CE",
-                        "Arn"
-                      ]
-                    },
-                    {
-                      "Fn::Join": [
-                        "",
-                        [
-                          {
-                            "Fn::GetAtt": [
-                              "LimbdaKinesisFirehose925A14CE",
-                              "Arn"
-                            ]
-                          },
-                          ":*"
-                        ]
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "Action": [
-                    "glue:GetTable",
-                    "glue:GetTableVersion",
-                    "glue:GetTableVersions"
-                  ],
-                  "Effect": "Allow",
-                  "Resource": "*"
-                }
-              ],
-              "Version": "2012-10-17"
-            },
-            "PolicyName": "allow-lambda-translation"
-          }
+          "arn:aws:iam::aws:policy/AWSLambdaExecute",
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole",
+          "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
         ]
       },
       "Metadata": {
         "aws:cdk:path": "CdkStack/TranslationRole/Resource"
+      }
+    },
+    "TranslationRoleDefaultPolicyE90E301D": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:AbortMultipartUpload",
+                "s3:GetBucketLocation",
+                "s3:GetObject",
+                "s3:ListBucket",
+                "s3:ListBucketMultipartUploads",
+                "s3:PutObject"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "cdkbusinfo2C2CF86C",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "cdkbusinfo2C2CF86C",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "lambda:InvokeFunction",
+                "lambda:GetFunctionConfiguration"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "LimbdaKinesisFirehose925A14CE",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "LimbdaKinesisFirehose925A14CE",
+                          "Arn"
+                        ]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "glue:GetTable",
+                "glue:GetTableVersion",
+                "glue:GetTableVersions"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "TranslationRoleDefaultPolicyE90E301D",
+        "Roles": [
+          {
+            "Ref": "TranslationRole574EADCA"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "CdkStack/TranslationRole/DefaultPolicy/Resource"
       }
     },
     "FirehoseDeliveryStream": {

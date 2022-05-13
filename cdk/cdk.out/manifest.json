@@ -23,7 +23,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/e44cd1bdc54f65730cf5a794b93600a9fc690467b131db65720201b2aea39a01.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/982cc0d11d4763cb5c14660dad4e1509041ef2d7a286ff783ca1a792f8c0864d.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -197,6 +197,12 @@
             "data": "crawlerRoleCB71E89D"
           }
         ],
+        "/CdkStack/crawlerRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "crawlerRoleDefaultPolicy7109B2A3"
+          }
+        ],
         "/CdkStack/crawlerRoleArn": [
           {
             "type": "aws:cdk:logicalId",
@@ -213,6 +219,12 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "TranslationRole574EADCA"
+          }
+        ],
+        "/CdkStack/TranslationRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TranslationRoleDefaultPolicyE90E301D"
           }
         ],
         "/CdkStack/FirehoseDeliveryStream": [

@@ -900,7 +900,7 @@
                           "Action": "sts:AssumeRole",
                           "Effect": "Allow",
                           "Principal": {
-                            "AWS": "*"
+                            "Service": "glue.amazonaws.com"
                           }
                         }
                       ],
@@ -908,22 +908,25 @@
                     },
                     "description": "Role for parquet translation",
                     "managedPolicyArns": [
-                      {
-                        "Fn::Join": [
-                          "",
-                          [
-                            "arn:",
-                            {
-                              "Ref": "AWS::Partition"
-                            },
-                            ":iam::aws:policy/service-role/AWSGlueServiceRole"
-                          ]
-                        ]
-                      }
-                    ],
-                    "policies": [
-                      {
-                        "policyName": "allow-convert-json-to-parquet",
+                      "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+                    ]
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                  "version": "2.17.0"
+                }
+              },
+              "DefaultPolicy": {
+                "id": "DefaultPolicy",
+                "path": "CdkStack/crawlerRole/DefaultPolicy",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "CdkStack/crawlerRole/DefaultPolicy/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Policy",
+                      "aws:cdk:cloudformation:props": {
                         "policyDocument": {
                           "Statement": [
                             {
@@ -961,13 +964,23 @@
                             }
                           ],
                           "Version": "2012-10-17"
-                        }
+                        },
+                        "policyName": "crawlerRoleDefaultPolicy7109B2A3",
+                        "roles": [
+                          {
+                            "Ref": "crawlerRoleCB71E89D"
+                          }
+                        ]
                       }
-                    ]
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.CfnPolicy",
+                      "version": "2.17.0"
+                    }
                   }
                 },
                 "constructInfo": {
-                  "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                  "fqn": "aws-cdk-lib.aws_iam.Policy",
                   "version": "2.17.0"
                 }
               }
@@ -1043,7 +1056,7 @@
                           "Action": "sts:AssumeRole",
                           "Effect": "Allow",
                           "Principal": {
-                            "AWS": "*"
+                            "Service": "firehose.amazonaws.com"
                           }
                         }
                       ],
@@ -1051,42 +1064,29 @@
                     },
                     "description": "TraslationRole",
                     "managedPolicyArns": [
-                      {
-                        "Fn::Join": [
-                          "",
-                          [
-                            "arn:",
-                            {
-                              "Ref": "AWS::Partition"
-                            },
-                            ":iam::aws:policy/service-role/AWSGlueServiceRole"
-                          ]
-                        ]
-                      },
-                      "arn:aws:iam::aws:policy/AWSLambdaExecute"
-                    ],
-                    "policies": [
-                      {
-                        "policyName": "allow-lambda-translation",
+                      "arn:aws:iam::aws:policy/AWSLambdaExecute",
+                      "arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole",
+                      "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+                    ]
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                  "version": "2.17.0"
+                }
+              },
+              "DefaultPolicy": {
+                "id": "DefaultPolicy",
+                "path": "CdkStack/TranslationRole/DefaultPolicy",
+                "children": {
+                  "Resource": {
+                    "id": "Resource",
+                    "path": "CdkStack/TranslationRole/DefaultPolicy/Resource",
+                    "attributes": {
+                      "aws:cdk:cloudformation:type": "AWS::IAM::Policy",
+                      "aws:cdk:cloudformation:props": {
                         "policyDocument": {
                           "Statement": [
-                            {
-                              "Action": [
-                                "kinesis:DescribeStream",
-                                "kinesis:DescribeStreamSummary",
-                                "kinesis:GetRecords",
-                                "kinesis:GetShardIterator",
-                                "kinesis:ListShards",
-                                "kinesis:SubscribeToShard"
-                              ],
-                              "Effect": "Allow",
-                              "Resource": {
-                                "Fn::GetAtt": [
-                                  "Stream790BDEE4",
-                                  "Arn"
-                                ]
-                              }
-                            },
                             {
                               "Action": [
                                 "s3:AbortMultipartUpload",
@@ -1160,13 +1160,23 @@
                             }
                           ],
                           "Version": "2012-10-17"
-                        }
+                        },
+                        "policyName": "TranslationRoleDefaultPolicyE90E301D",
+                        "roles": [
+                          {
+                            "Ref": "TranslationRole574EADCA"
+                          }
+                        ]
                       }
-                    ]
+                    },
+                    "constructInfo": {
+                      "fqn": "aws-cdk-lib.aws_iam.CfnPolicy",
+                      "version": "2.17.0"
+                    }
                   }
                 },
                 "constructInfo": {
-                  "fqn": "aws-cdk-lib.aws_iam.CfnRole",
+                  "fqn": "aws-cdk-lib.aws_iam.Policy",
                   "version": "2.17.0"
                 }
               }
