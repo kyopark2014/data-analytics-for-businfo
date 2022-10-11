@@ -1028,7 +1028,7 @@
                     }
                   ]
                 },
-                "databaseName": "inspector",
+                "databaseName": "businfo",
                 "name": "translate-parquet-crawler",
                 "schemaChangePolicy": {
                   "deleteBehavior": "DELETE_FROM_DATABASE"
@@ -1238,7 +1238,7 @@
                   "dataFormatConversionConfiguration": {
                     "enabled": false,
                     "schemaConfiguration": {
-                      "databaseName": "inspector",
+                      "databaseName": "businfo",
                       "roleArn": {
                         "Fn::GetAtt": [
                           "TranslationRole574EADCA",
@@ -1267,35 +1267,6 @@
             },
             "constructInfo": {
               "fqn": "aws-cdk-lib.aws_kinesisfirehose.CfnDeliveryStream",
-              "version": "2.17.0"
-            }
-          },
-          "analytics-athena-workgroup": {
-            "id": "analytics-athena-workgroup",
-            "path": "CdkStack/analytics-athena-workgroup",
-            "attributes": {
-              "aws:cdk:cloudformation:type": "AWS::Athena::WorkGroup",
-              "aws:cdk:cloudformation:props": {
-                "name": "businfo-workgroup",
-                "workGroupConfiguration": {
-                  "resultConfiguration": {
-                    "outputLocation": {
-                      "Fn::Join": [
-                        "",
-                        [
-                          "s3://",
-                          {
-                            "Ref": "cdkbusinfo2C2CF86C"
-                          }
-                        ]
-                      ]
-                    }
-                  }
-                }
-              }
-            },
-            "constructInfo": {
-              "fqn": "aws-cdk-lib.aws_athena.CfnWorkGroup",
               "version": "2.17.0"
             }
           },

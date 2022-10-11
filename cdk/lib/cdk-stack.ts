@@ -149,7 +149,7 @@ export class CdkStack extends Stack {
     });
     
     // crawler 
-    const glueDatabaseName = "inspector";
+    const glueDatabaseName = "businfo";
     const crawler = new glue.CfnCrawler(this, "TranslateToParquetGlueCrawler", {
       name: "translate-parquet-crawler",
       role: crawlerRole.roleArn,
@@ -255,13 +255,13 @@ export class CdkStack extends Stack {
     });      
 
     // athena workgroup
-    new athena.CfnWorkGroup(this, 'analytics-athena-workgroup', {
+  /*  new athena.CfnWorkGroup(this, 'analytics-athena-workgroup', {
       name: `businfo-workgroup`,
       workGroupConfiguration: {
         resultConfiguration: {
           outputLocation: `s3://${s3Bucket.bucketName}`,
         },
       },
-    })
+    }) */
   }
 }

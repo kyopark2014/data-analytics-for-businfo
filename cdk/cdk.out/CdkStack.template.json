@@ -682,7 +682,7 @@
             }
           ]
         },
-        "DatabaseName": "inspector",
+        "DatabaseName": "businfo",
         "Name": "translate-parquet-crawler",
         "SchemaChangePolicy": {
           "DeleteBehavior": "DELETE_FROM_DATABASE"
@@ -827,7 +827,7 @@
           "DataFormatConversionConfiguration": {
             "Enabled": false,
             "SchemaConfiguration": {
-              "DatabaseName": "inspector",
+              "DatabaseName": "businfo",
               "RoleARN": {
                 "Fn::GetAtt": [
                   "TranslationRole574EADCA",
@@ -887,34 +887,10 @@
         "aws:cdk:path": "CdkStack/FirehoseDeliveryStream"
       }
     },
-    "analyticsathenaworkgroup": {
-      "Type": "AWS::Athena::WorkGroup",
-      "Properties": {
-        "Name": "businfo-workgroup",
-        "WorkGroupConfiguration": {
-          "ResultConfiguration": {
-            "OutputLocation": {
-              "Fn::Join": [
-                "",
-                [
-                  "s3://",
-                  {
-                    "Ref": "cdkbusinfo2C2CF86C"
-                  }
-                ]
-              ]
-            }
-          }
-        }
-      },
-      "Metadata": {
-        "aws:cdk:path": "CdkStack/analytics-athena-workgroup"
-      }
-    },
     "CDKMetadata": {
       "Type": "AWS::CDK::Metadata",
       "Properties": {
-        "Analytics": "v2:deflate64:H4sIAAAAAAAA/21RTW/CMAz9LbuH7ANNO4+O7TQNlUk7otAYMM1HFSdFqMp/X5IW0KSd3rNfbD/HT/zxhT/ciRPNGtnOFG75sPaiaVlKbQaa82ERmhY8q3ZmYiOsrMLmfEtP8RgsBEFkLRogpNzRgdD57cgik2cjtJVp2rfYKshSIZEpobdS8OE9mMajNVm68mUPxq9tcA18iq5Ds8/y/9kVOI1EqSwyFJoPtR0HFbzZH1lkNN8IIvDEXzMwyF2T+TpMZSHb26sAPEWVEycF7rLjDh0cLBXpDRT24M7T1sIfwIgs/FjXfjgbusiqQN7qGqi4Lu2v/I+0crZHmQYVU+k0+2m9r+C7UM5SWSOxfM+lKDJjJfAj3ffpvM/pwEdCnLlgPGrg9Yi/OYXvW/wBAAA="
+        "Analytics": "v2:deflate64:H4sIAAAAAAAA/21RTU/DMAz9LdyzsLEDXFmBG2LquE9Z4g2v+ajipNNU9b+TpO0mJE5+9oufn+MnvnrmywdxoYVUzULjgfe7IGTDUmnf05r3mygbCKw62gmNYes0yuu9POVjshEEA2vQAiFlRQ/C5LcjGpi6WmGcStO+xUFDpgoYmBbmoATvP6KVAZ3N1A2/d2DDzkUv4VO0LdpTpv+vbsEbJEptA0NheF+7cVCJd/sjGhit94IIAvHXHBhk1WS+jlNbzPZOOgJPWeXFRYOfdzyihx9HhXoDjR3467xrFSk4UwMVh0Xqhv9QW+86VEm0GEhnOE2rfMXQxnKCylmF5SvmpoFZp4Cf6bFbvfBlOuaZEBc+2oAGeD3GX6cqkBzoAQAA"
       },
       "Metadata": {
         "aws:cdk:path": "CdkStack/CDKMetadata/Default"
