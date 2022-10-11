@@ -14,4 +14,7 @@ https://ap-northeast-2.console.aws.amazon.com/firehose/home?region=ap-northeast-
 
 3) [Record format conversion]을 "Enable"로 설정하고, [Output format]을 "Apache Parquet"를 선택합니다. [Schema for source records]에서 [AWS Glue region]을 "Asia Pacific(Seoul"을 선택하고, [AWS Glue Database]를 "businfo"을 선택합니다. 마지막으로 [AWS Glue table]에서 [Browse]를 선택하여, Glue Crawler로 생성한 "businfo"을 선택합니다. 선택이 다 되면, [Save changes]를 선택합니다.
 
+![noname](https://user-images.githubusercontent.com/52392004/194975357-63da8340-578a-43cb-92a8-48857517cae7.png)
+
+
 ![noname](https://user-images.githubusercontent.com/52392004/194974891-d8889eb8-f9a6-48df-b7d5-80cf03050f5b.png)
