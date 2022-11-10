@@ -26,6 +26,7 @@
                 "attributes": {
                   "aws:cdk:cloudformation:type": "AWS::S3::Bucket",
                   "aws:cdk:cloudformation:props": {
+                    "bucketName": "cdk-businfo",
                     "tags": [
                       {
                         "key": "aws-cdk:auto-delete-objects",
@@ -200,7 +201,7 @@
                 "attributes": {
                   "aws:cdk:cloudformation:type": "AWS::Kinesis::Stream",
                   "aws:cdk:cloudformation:props": {
-                    "name": "businfo",
+                    "name": "businfo-stream",
                     "retentionPeriodHours": 48,
                     "streamEncryption": {
                       "Fn::If": [
@@ -467,6 +468,7 @@
                       ]
                     },
                     "description": "get eventinfo from kinesis data stream",
+                    "functionName": "lambda-kinesis-businfo",
                     "handler": "index.handler",
                     "runtime": "nodejs14.x",
                     "timeout": 3
@@ -615,6 +617,7 @@
                       ]
                     },
                     "description": "update event sources",
+                    "functionName": "lambda-firehose-businfo",
                     "handler": "index.handler",
                     "runtime": "nodejs14.x",
                     "timeout": 3
@@ -804,6 +807,7 @@
                         "tableName": "dynamodb-businfo"
                       }
                     },
+                    "functionName": "lambda-businfo",
                     "handler": "index.handler",
                     "runtime": "nodejs14.x",
                     "timeout": 10
@@ -831,6 +835,7 @@
                   "aws:cdk:cloudformation:type": "AWS::Events::Rule",
                   "aws:cdk:cloudformation:props": {
                     "description": "Schedule a Lambda to save arrival time of buses",
+                    "name": "rule-businfo",
                     "scheduleExpression": "rate(1 minute)",
                     "state": "ENABLED",
                     "targets": [
@@ -909,7 +914,8 @@
                     "description": "Role for parquet translation",
                     "managedPolicyArns": [
                       "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
-                    ]
+                    ],
+                    "roleName": "crawler-role-businfo"
                   }
                 },
                 "constructInfo": {
@@ -1067,7 +1073,8 @@
                       "arn:aws:iam::aws:policy/AWSLambdaExecute",
                       "arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole",
                       "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
-                    ]
+                    ],
+                    "roleName": "businfo-translation-role"
                   }
                 },
                 "constructInfo": {

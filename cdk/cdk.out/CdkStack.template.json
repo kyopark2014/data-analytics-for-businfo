@@ -3,6 +3,7 @@
     "cdkbusinfo2C2CF86C": {
       "Type": "AWS::S3::Bucket",
       "Properties": {
+        "BucketName": "cdk-businfo",
         "Tags": [
           {
             "Key": "aws-cdk:auto-delete-objects",
@@ -161,7 +162,7 @@
     "Stream790BDEE4": {
       "Type": "AWS::Kinesis::Stream",
       "Properties": {
-        "Name": "businfo",
+        "Name": "businfo-stream",
         "RetentionPeriodHours": 48,
         "StreamEncryption": {
           "Fn::If": [
@@ -320,6 +321,7 @@
           ]
         },
         "Description": "get eventinfo from kinesis data stream",
+        "FunctionName": "lambda-kinesis-businfo",
         "Handler": "index.handler",
         "Runtime": "nodejs14.x",
         "Timeout": 3
@@ -404,6 +406,7 @@
           ]
         },
         "Description": "update event sources",
+        "FunctionName": "lambda-firehose-businfo",
         "Handler": "index.handler",
         "Runtime": "nodejs14.x",
         "Timeout": 3
@@ -520,6 +523,7 @@
             "tableName": "dynamodb-businfo"
           }
         },
+        "FunctionName": "lambda-businfo",
         "Handler": "index.handler",
         "Runtime": "nodejs14.x",
         "Timeout": 10
@@ -539,6 +543,7 @@
       "Type": "AWS::Events::Rule",
       "Properties": {
         "Description": "Schedule a Lambda to save arrival time of buses",
+        "Name": "rule-businfo",
         "ScheduleExpression": "rate(1 minute)",
         "State": "ENABLED",
         "Targets": [
@@ -597,7 +602,8 @@
         "Description": "Role for parquet translation",
         "ManagedPolicyArns": [
           "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
-        ]
+        ],
+        "RoleName": "crawler-role-businfo"
       },
       "Metadata": {
         "aws:cdk:path": "CdkStack/crawlerRole/Resource"
@@ -712,7 +718,8 @@
           "arn:aws:iam::aws:policy/AWSLambdaExecute",
           "arn:aws:iam::aws:policy/service-role/AWSLambdaKinesisExecutionRole",
           "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
-        ]
+        ],
+        "RoleName": "businfo-translation-role"
       },
       "Metadata": {
         "aws:cdk:path": "CdkStack/TranslationRole/Resource"
@@ -890,7 +897,7 @@
     "CDKMetadata": {
       "Type": "AWS::CDK::Metadata",
       "Properties": {
-        "Analytics": "v2:deflate64:H4sIAAAAAAAA/21RTU/DMAz9LdyzsLEDXFmBG2LquE9Z4g2v+ajipNNU9b+TpO0mJE5+9oufn+MnvnrmywdxoYVUzULjgfe7IGTDUmnf05r3mygbCKw62gmNYes0yuu9POVjshEEA2vQAiFlRQ/C5LcjGpi6WmGcStO+xUFDpgoYmBbmoATvP6KVAZ3N1A2/d2DDzkUv4VO0LdpTpv+vbsEbJEptA0NheF+7cVCJd/sjGhit94IIAvHXHBhk1WS+jlNbzPZOOgJPWeXFRYOfdzyihx9HhXoDjR3467xrFSk4UwMVh0Xqhv9QW+86VEm0GEhnOE2rfMXQxnKCylmF5SvmpoFZp4Cf6bFbvfBlOuaZEBc+2oAGeD3GX6cqkBzoAQAA"
+        "Analytics": "v2:deflate64:H4sIAAAAAAAA/21RTU/DMAz9LdyzQNkBrqzADTF13Ke08Tav+ajipFNV9b+TpN0mJE5+9oufn+NnXrzwpwdxoVUj25XCmo87L5qWxdJ+pDUfN6FpwbPyYBY0h61V2Az38pLPyUYQTKxFA4SUFB0Ind7OaGJyMEJbGaf9iFpBojKYmBK6loKPn8E0Hq1J1A1/9GD8zgbXwJfoOjTHRP9f3YLTSBTbJoZC87Gy86Ac7/ZnNDFa7wUReOJvKTBIqtF8FZa2kOwdVQAes9KJiwJ33fGADk6WMvUOCntww3XXMpC3ugLKDrPUDf+hts72KKNoNhDPcFxW+Q6+C/kEpTUS81dcmyZmrAR+pse+eOVFEa95JsSVC8ajBl7N8RcHNSj26QEAAA=="
       },
       "Metadata": {
         "aws:cdk:path": "CdkStack/CDKMetadata/Default"

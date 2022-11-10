@@ -24,6 +24,7 @@ export class CdkStack extends Stack {
     // S3
     const s3Bucket = new s3.Bucket(this, "cdk-businfo",{
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+      bucketName: "cdk-businfo",
       autoDeleteObjects: true,
       publicReadAccess: false,
       versioned: false,
@@ -43,7 +44,7 @@ export class CdkStack extends Stack {
 
     // kinesis data stream
     const stream = new kinesisstream.Stream(this, 'Stream', {
-      streamName: 'businfo',
+      streamName: 'businfo-stream',
       retentionPeriod: cdk.Duration.hours(48),
       streamMode: kinesisstream.StreamMode.ON_DEMAND
     });
@@ -71,6 +72,7 @@ export class CdkStack extends Stack {
     // Lambda - kinesisInfo
     const lambdakinesis = new lambda.Function(this, "LambdaKinesisStream", {
       description: 'get eventinfo from kinesis data stream',
+      functionName: 'lambda-kinesis-businfo',
       runtime: lambda.Runtime.NODEJS_14_X, 
       code: lambda.Code.fromAsset("repositories/lambda-kinesis-stream"), 
       handler: "index.handler", 
@@ -82,6 +84,7 @@ export class CdkStack extends Stack {
     // Lambda - kinesisInfo
     const lambdafirehose = new lambda.Function(this, "LimbdaKinesisFirehose", {
       description: 'update event sources',
+      functionName: 'lambda-firehose-businfo',
       runtime: lambda.Runtime.NODEJS_14_X, 
       code: lambda.Code.fromAsset("repositories/lambda-kinesis-firehose"), 
       handler: "index.handler", 
@@ -103,6 +106,7 @@ export class CdkStack extends Stack {
     // Lambda - UpdateBusInfo
     const lambdaBusInfo = new lambda.Function(this, "LambdaBusInfo", {
       description: 'Lambda for businfo',
+      functionName: 'lambda-businfo',
       runtime: lambda.Runtime.NODEJS_14_X, 
       code: lambda.Code.fromAsset("repositories/lambda-businfo"), 
       handler: "index.handler", 
@@ -117,12 +121,14 @@ export class CdkStack extends Stack {
     const rule = new events.Rule(this, 'Cron', {
       description: "Schedule a Lambda to save arrival time of buses",
       schedule: events.Schedule.expression('rate(1 minute)'),
+      ruleName: 'rule-businfo'
     }); 
     rule.addTarget(new targets.LambdaFunction(lambdaBusInfo));
 
     // generate a table by crawler 
     const crawlerRole = new iam.Role(this, "crawlerRole", {
       assumedBy: new iam.ServicePrincipal("glue.amazonaws.com"),
+      roleName: 'crawler-role-businfo',
       description: "Role for parquet translation",
     });
     crawlerRole.addManagedPolicy({
@@ -167,7 +173,7 @@ export class CdkStack extends Stack {
     // Traslation Role
     const translationRole = new iam.Role(this, 'TranslationRole', {
       assumedBy: new iam.ServicePrincipal("firehose.amazonaws.com"),
-      
+      roleName: 'businfo-translation-role',
       description: 'TraslationRole',
     });
     translationRole.addManagedPolicy({
