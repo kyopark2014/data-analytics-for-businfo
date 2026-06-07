@@ -1,6 +1,6 @@
 # Amazon Serverless를 이용한 실시간 버스 정보 수집 및 저장
 
-여기에서는 버스 정보를 주기적으로 수집하여 분석할 수 있도록, Amazon Serverless인 [Amazon Kinesis Data Stream](https://github.com/kyopark2014/technical-summary/blob/main/kinesis-data-stream.md), [Kinesis Data Firehose](https://github.com/kyopark2014/technical-summary/blob/main/kinesis-data-firehose.md), Lambda, DynamoDB, S3를 이용합니다. 인프라는 IaC(Infrastructure as Code) 툴인 [AWS CDK](https://github.com/kyopark2014/technical-summary/blob/main/cdk-introduction.md)를 이용해 구성합니다. 
+여기에서는 버스 정보를 주기적으로 수집하여 분석할 수 있도록, Amazon Serverless인 [Amazon Kinesis Data Stream](https://github.com/kyopark2014/technical-summary/blob/main/kinesis-data-stream.md), [Kinesis Data Firehose](https://github.com/kyopark2014/technical-summary/blob/main/kinesis-data-firehose.md), Lambda, DynamoDB, S3를 이용합니다. 인프라는 boto3 기반의 `installer.py` / `uninstaller.py`로 생성·삭제합니다. (`cdk/lib/cdk-stack.ts`는 참고용 IaC 정의이며, 실제 배포는 CDK 대신 boto3 스크립트를 사용합니다.)
 
 ## 문제 정의
 
@@ -12,7 +12,7 @@
 
 ## Architecture 구성 
 
-전체적인 구현 Architecture는 아래와 같으며, 데이터를 저장하는 Data Ingention 부분과 수집된 데이터를 분석에 맞도록 가공하는 Analytics로 크게 나누어지며, 인프라 관리를 위한 AWS CDK와 로깅을 위한 Amazon CloudWatch로 구성됩니다. 여기서, Amazon Lambda가 수집한 데이터를 Amazon DynamoDB에 저장하고, 이때 발생한 event를 stream 형태로 Kinesis Data Stream이 가져가 필요한 데이터로 가공합니다. 
+전체적인 구현 Architecture는 아래와 같으며, 데이터를 저장하는 Data Ingestion 부분과 수집된 데이터를 분석에 맞도록 가공하는 Analytics로 크게 나누어지며, 인프라 관리를 위한 `installer.py` / `uninstaller.py`와 로깅을 위한 Amazon CloudWatch로 구성됩니다. 여기서, Amazon Lambda가 수집한 데이터를 Amazon DynamoDB에 저장하고, 이때 발생한 event를 stream 형태로 Kinesis Data Stream이 가져가 필요한 데이터로 가공합니다.
 
 아래의 Data Ingestion에 해당하는 Amzaon Lambda와 Amazon DynamoDB 조합은, 필요시 다른 API를 이용해 DynamoDB에 저장된 이력들을 조회 가능하도록 구현하였으나, 이련 용도 없이 단순히 데이터 수집 용도로만 사용시에는 DynamoDB 없이 Lambda로 부터 Amazon Kinesis Stream을 통해 바로 데이터를 수집 할 수 있습니다. 
 
@@ -31,6 +31,65 @@
  
 5. S3에 저장된 데이터는 Amazon Athena를 통해 읽고 분석합니다. 
 
+### Operation Architecture
+
+```mermaid
+flowchart TB
+  subgraph Deploy["인프라 배포 (installer.py)"]
+    INS[installer.py]
+    CFG[config.json]
+    INS --> CFG
+  end
+
+  subgraph Ingestion["Data Ingestion"]
+    EB["EventBridge rule-businfo<br/>rate(1 minute)"]
+    LBI["lambda-businfo"]
+    API["경기버스 Open API"]
+    DDB[("DynamoDB<br/>dynamodb-businfo")]
+    EB --> LBI
+    LBI --> API
+    LBI --> DDB
+  end
+
+  subgraph Streaming["Stream Processing"]
+    KS["Kinesis Data Stream<br/>businfo-stream"]
+    LKS["lambda-kinesis-businfo"]
+    FH["Kinesis Data Firehose<br/>businfo-delivery-stream"]
+    LFH["lambda-firehose-businfo"]
+    DDB -->|Kinesis streaming| KS
+    KS --> LKS
+    KS --> FH
+    FH --> LFH
+  end
+
+  subgraph Analytics["Analytics"]
+    S3[("S3<br/>businfo-{accountId}-{region}/businfo/")]
+    GLUE["Glue Crawler<br/>translate-parquet-crawler"]
+    CAT["Glue Data Catalog<br/>businfo"]
+    ATH["Amazon Athena"]
+    FH --> S3
+    S3 --> GLUE
+    GLUE --> CAT
+    CAT --> ATH
+    S3 --> ATH
+  end
+
+  INS --> Ingestion
+  INS --> Streaming
+  INS --> Analytics
+```
+
+| 단계 | 리소스 / 코드 | 설명 |
+|------|---------------|------|
+| **1. 수집** | `rule-businfo` → `lambda-businfo` | 1분 주기로 센터필드 정류장 버스 도착 정보를 Open API에서 조회해 DynamoDB에 저장 |
+| **2. 스트리밍** | `dynamodb-businfo` → `businfo-stream` | DynamoDB 변경 이벤트를 Kinesis Data Stream으로 전달 |
+| **3. 모니터링** | `lambda-kinesis-businfo` | 스트림 데이터를 실시간 확인·추가 처리 (선택) |
+| **4. 변환·적재** | `businfo-delivery-stream` + `lambda-firehose-businfo` | Firehose가 스트림을 읽고 버스 필드만 추출해 S3 `businfo/` prefix에 저장 |
+| **5. 카탈로그** | `translate-parquet-crawler` | Glue Crawler가 S3 데이터를 스캔해 `businfo` 테이블 메타데이터 생성 |
+| **6. 분석** | Amazon Athena | Glue Catalog / S3 데이터를 SQL로 조회·분석 |
+| **배포·삭제** | `installer.py` / `uninstaller.py` | boto3로 위 리소스를 생성·삭제하고 결과를 `config.json`에 기록 |
+
+
 
 ## 버스 도착 정보 조회
 
@@ -39,14 +98,11 @@
 
 ## 주기적인 버스 정보 수집
 
-[Amazon CDK로 정의한 event rule](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/lib/cdk-stack.ts)을 이용하여, 아래와 같이 정기적으로 버스 정보를 열람합니다. [Lambda for businfo](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/repositories/lambda-businfo/index.js)는 Bus open api를 호출하여 DynamoDB에 저장합니다.  
+`installer.py`가 EventBridge 규칙 `rule-businfo`를 생성하여 1분 주기로 [Lambda for businfo](cdk/repositories/lambda-businfo/index.js)를 실행합니다. Lambda는 Bus Open API를 호출하여 DynamoDB에 저장합니다.
 
-```java
-    const rule = new events.Rule(this, 'Cron', {
-      description: "Lambda to save arrival time of buses",
-      schedule: events.Schedule.expression('rate(1 minute)'),
-    }); 
-    rule.addTarget(new targets.LambdaFunction(lambdaBusInfo));
+```bash
+# installer.py가 생성하는 EventBridge 스케줄
+rate(1 minute) → lambda-businfo
 ```
 
 ## Amazon Kinesis Data Stream로 수집되는 정보 
@@ -63,56 +119,82 @@ Amazon Kinesis Data Firehose에 전달된 데이터는 DynamoDB에 INSERT 이벤
 
 이를위해 Amazon Glue Data Catalog 기능인 Crawler를 이용해, Table을 생성하고, Amazon Kinesis Fiehose에서 Parquet 변환을 합니다.
 
-## Athena Work Group 설정 
+## Athena Work Group 설정
 
-AWS CDK로 아래와 같이 Athena Work Group을 설정합니다. 
+Athena Work Group(`businfo-workgroup`)은 분석 시 Console에서 별도 생성할 수 있습니다. S3 결과 경로는 `config.json`의 `s3Path`를 사용합니다.
 
-```java
-    new athena.CfnWorkGroup(this, 'analytics-athena-workgroup', {
-      name: `businfo-workgroup`,
-      workGroupConfiguration: {
-        resultConfiguration: {
-          outputLocation: `s3://${s3Bucket.bucketName}`,
-        },
-      },
-    })
-```    
+## 인프라 생성 및 삭제
 
-## 인프라 생성 및 삭제 
+기존 AWS CDK(`cdk deploy`) 방식은 boto3 기반 `installer.py`로 대체하였습니다. `ref/installer.py`와 동일한 패턴으로 리소스를 순차 생성하고, 배포 결과를 `config.json`에 기록합니다.
 
-1) AWS CDK 사용시
+### 사전 요구 사항
 
-[AWS CDK](https://github.com/kyopark2014/technical-summary/blob/main/cdk-introduction.md)를 이용하여 인프라를 생성할 수 있습니다. 상세한 내용은 [AWS CDK로 Data Ingestion](https://github.com/kyopark2014/data-inggestion-using-kinesis/blob/main/cdk/README.md)을 참고하시기 바랍니다.
+| 항목 | 버전/설명 |
+|------|-----------|
+| Python | 3.9 이상 |
+| boto3 | AWS SDK for Python |
+| AWS CLI 자격 증명 | `aws configure` 또는 환경 변수 |
+| Node.js / npm | `lambda-businfo` 패키징 시 필요 (`installer.py` 실행 시 자동 설치) |
+| Lambda 런타임 | `nodejs20.x` |
 
-**인프라 생성 명령어**
-
-```c
-$ cdk bootstrap aws://[account number]/ap-northeast-2
-$ cdk synth
-$ cdk deploy
+```bash
+pip install boto3
 ```
 
-AWK CDK로 deploy하면 lambda for businfo가 schedule에 따라 자동으로 실행되어서 버스 도착정보를 수집합니다. 아직 parquet로 포맷 변경하는 옵션을 enable하지 않았으므로, 수집된 데이터는 Amazon S3의 bucket에 아래와 같이 확장자가 없이 json 포맷으로 저장됩니다. 
+### installer.py / uninstaller.py
+
+`installer.py`는 `cdk/lib/cdk-stack.ts`에 정의된 AWS 리소스를 boto3로 생성합니다. 배포가 완료되면 생성된 리소스 정보가 프로젝트 루트의 `config.json`에 저장됩니다.
+
+**생성되는 주요 리소스**
+
+| 리소스 | 이름 |
+|--------|------|
+| S3 Bucket | `businfo-{accountId}-{region}` |
+| Kinesis Data Stream | `businfo-stream` |
+| DynamoDB Table | `dynamodb-businfo` |
+| Lambda | `lambda-businfo`, `lambda-kinesis-businfo`, `lambda-firehose-businfo` |
+| EventBridge Rule | `rule-businfo` (1분 주기) |
+| Glue Database / Crawler | `businfo` / `translate-parquet-crawler` |
+| Kinesis Data Firehose | `businfo-delivery-stream` |
+
+**인프라 생성**
+
+```bash
+python3 installer.py
+python3 installer.py --region ap-northeast-2
+python3 installer.py --debug
+```
+
+**인프라 삭제**
+
+`uninstaller.py`는 `installer.py`로 생성한 리소스를 의존성 역순으로 삭제하고, `config.json`을 정리합니다. 삭제 후 `deploymentStatus`가 `uninstalled`로 기록됩니다.
+
+```bash
+python3 uninstaller.py
+python3 uninstaller.py --yes
+python3 uninstaller.py --region ap-northeast-2 --yes
+```
+
+`config.json`에 `bucketName` 등이 저장되어 있으면 재실행·삭제 시 해당 값을 우선 사용합니다.
+
+**배포 후 작업**
+
+`installer.py`로 deploy하면 `lambda-businfo`가 schedule에 따라 자동으로 실행되어 버스 도착 정보를 수집합니다. 초기에는 parquet 변환이 비활성화되어 있으므로, 수집된 데이터는 S3 bucket에 json 포맷으로 저장됩니다.
 
 ![image](https://user-images.githubusercontent.com/52392004/164419273-428851f2-15c6-4c64-ab4d-95dcc9a0c434.png)
 
-json 파일이 수집된 후에 [Table 생성(Crawler)](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/run-crawler.md)을 참조하여 crawler를 run하여 변환을 위한 table을 생성합니다.  
+json 파일이 수집된 후 [Table 생성(Crawler)](run-crawler.md)을 참조하여 crawler를 실행해 변환용 table을 생성합니다.
 
-table이 생성되면, parquet 포맷으로 변경하기 위해서 [Deploy 추가 사항](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/enable-format-translation.md)을 참조하여 parquet로 변환을 시작합니다. 
+table이 생성되면 [Deploy 추가 사항](enable-format-translation.md)을 참조하여 parquet 변환을 시작합니다.
 
-**인프라 삭제 명령어**
+### 참고: Console / CDK
 
-```c
-$ cdk destroy
-```
-
-2) Console에서 생성시 
-
-AWS CDK 사용이 익숙하지 않은 경우에 Console에서도 인프라 생성이 가능합니다. [Console 에서 인프라 생성](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/console/Readme.md)을 참고하시기 바랍니다.
+- **Console**: 수동 구성 가이드는 [console/Readme.md](console/Readme.md)를 참고하세요.
+- **CDK**: `cdk/` 디렉터리의 스택 정의는 참고용이며, 신규 배포에는 `installer.py`를 사용합니다.
 
 ## 시험 및 결과
 
-AWS CDK로 현재 인프라를 deploy하면, Cron Rule에 따라 Lambda가 정기적으로 버스의 실시간 정보를 조회하여 DynamoDB에 저장하고 Amazon Kinesis를 통해 Parquet 형식으로 S3에 저장됩니다. Amazon S3에 저장된 버스 정보는 아래와 같이 확인 할 수 있습니다. 
+`installer.py`로 인프라를 deploy하면 Cron Rule에 따라 Lambda가 정기적으로 버스의 실시간 정보를 조회하여 DynamoDB에 저장하고 Amazon Kinesis를 통해 S3에 저장됩니다. Parquet 변환을 활성화하면 분석에 적합한 형식으로 저장됩니다. Amazon S3에 저장된 버스 정보는 아래와 같이 확인할 수 있습니다.
 
 ![image](https://user-images.githubusercontent.com/52392004/163661209-f81d4bc1-8438-454a-aa2f-9ead2e09124c.png)
 
