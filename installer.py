@@ -44,7 +44,7 @@ lambda_businfo_role_name = "lambda-businfo-role"
 lambda_runtime = "nodejs20.x"
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-lambda_base_dir = os.path.join(script_dir, "cdk", "repositories")
+lambda_base_dir = script_dir
 
 sts_client = boto3.client("sts", region_name=region)
 account_id = sts_client.get_caller_identity()["Account"]

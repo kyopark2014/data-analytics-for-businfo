@@ -74,7 +74,7 @@ export class CdkStack extends Stack {
       description: 'get eventinfo from kinesis data stream',
       functionName: 'lambda-kinesis-businfo',
       runtime: lambda.Runtime.NODEJS_14_X, 
-      code: lambda.Code.fromAsset("repositories/lambda-kinesis-stream"), 
+      code: lambda.Code.fromAsset("../lambda-kinesis-stream"), 
       handler: "index.handler", 
       timeout: cdk.Duration.seconds(3),
       environment: {
@@ -86,7 +86,7 @@ export class CdkStack extends Stack {
       description: 'update event sources',
       functionName: 'lambda-firehose-businfo',
       runtime: lambda.Runtime.NODEJS_14_X, 
-      code: lambda.Code.fromAsset("repositories/lambda-kinesis-firehose"), 
+      code: lambda.Code.fromAsset("../lambda-kinesis-firehose"), 
       handler: "index.handler", 
       timeout: cdk.Duration.seconds(3),
       environment: {
@@ -108,7 +108,7 @@ export class CdkStack extends Stack {
       description: 'Lambda for businfo',
       functionName: 'lambda-businfo',
       runtime: lambda.Runtime.NODEJS_14_X, 
-      code: lambda.Code.fromAsset("repositories/lambda-businfo"), 
+      code: lambda.Code.fromAsset("../lambda-businfo"), 
       handler: "index.handler", 
       timeout: cdk.Duration.seconds(10),
       environment: {

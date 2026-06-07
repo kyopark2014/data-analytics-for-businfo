@@ -14,7 +14,7 @@ https://ap-northeast-2.console.aws.amazon.com/lambda/home?region=ap-northeast-2#
 
 ![noname](https://user-images.githubusercontent.com/52392004/163928857-8a157658-968d-48e4-9c41-3da78a73438a.png)
 
-4) [github](https://github.com/kyopark2014/data-analytics-for-businfo/blob/main/cdk/repositories/lambda-kinesis-firehose/index.js)에서 코드를 가져와서 등록합니다. 
+4) [github](https://github.com/kyopark2014/analytics-for-bus-schedule/blob/main/lambda-kinesis-firehose/index.js)에서 코드를 가져와서 등록합니다. 
 
 전체 코드를 복사하여 index.js에 복사합니다. 복사후에는 [Deploy]를 선택하여 Lambda 코드를 반영합니다. 
 

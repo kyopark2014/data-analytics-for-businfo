@@ -98,7 +98,7 @@ flowchart TB
 
 ## 주기적인 버스 정보 수집
 
-`installer.py`가 EventBridge 규칙 `rule-businfo`를 생성하여 1분 주기로 [Lambda for businfo](cdk/repositories/lambda-businfo/index.js)를 실행합니다. Lambda는 Bus Open API를 호출하여 DynamoDB에 저장합니다.
+`installer.py`가 EventBridge 규칙 `rule-businfo`를 생성하여 1분 주기로 [Lambda for businfo](lambda-businfo/index.js)를 실행합니다. Lambda는 Bus Open API를 호출하여 DynamoDB에 저장합니다.
 
 ```bash
 # installer.py가 생성하는 EventBridge 스케줄

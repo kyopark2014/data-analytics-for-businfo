@@ -23,7 +23,7 @@ https://ap-northeast-2.console.aws.amazon.com/lambda/home?region=ap-northeast-2#
 
 ![noname](https://user-images.githubusercontent.com/52392004/163895338-784295ab-ce05-4266-aea1-2b82b48c85f5.png)
 
-6) [Uplaod]를 선택하여 "data-analytics-for-businfo/tree/main/cdk/repositories/lambda-businfo"에 있는 "deploy.zip"을 선택합니다. 
+6) [Uplaod]를 선택하여 "analytics-for-bus-schedule/tree/main/lambda-businfo"에 있는 "deploy.zip"을 선택합니다. 
 
 ![image](https://user-images.githubusercontent.com/52392004/163895413-03f9e205-8ebb-4599-a3b9-0ba6fe97ad98.png)
 
