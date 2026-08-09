@@ -11,6 +11,7 @@ import logging
 import os
 import sys
 import time
+import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
@@ -35,10 +36,13 @@ event_rule_name = "rule-businfo"
 lambda_kinesis_name = "lambda-kinesis-businfo"
 lambda_firehose_name = "lambda-firehose-businfo"
 lambda_businfo_name = "lambda-businfo"
+lambda_harness_name = "lambda-harness-businfo"
+api_harness_name = "api-harness-businfo"
 
 lambda_kinesis_role_name = "lambda-kinesis-businfo-role"
 lambda_firehose_role_name = "lambda-firehose-businfo-role"
 lambda_businfo_role_name = "lambda-businfo-role"
+lambda_harness_role_name = "lambda-harness-businfo-role"
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -53,6 +57,11 @@ lambda_client = boto3.client("lambda", region_name=region)
 events_client = boto3.client("events", region_name=region)
 glue_client = boto3.client("glue", region_name=region)
 firehose_client = boto3.client("firehose", region_name=region)
+apigatewayv2_client = boto3.client("apigatewayv2", region_name=region)
+agentcore_control_client = boto3.client(
+    "bedrock-agentcore-control",
+    region_name=region,
+)
 
 
 def setup_logging(log_level=logging.INFO):
@@ -133,6 +142,27 @@ def update_config_json(deletion_summary: Dict):
         "translationRoleArn",
         "firehoseName",
         "firehoseArn",
+        "HARNESS_ARN",
+        "HARNESS_ID",
+        "harnessName",
+        "harnessExecutionRole",
+        "codeInterpreterId",
+        "codeInterpreterArn",
+        "codeInterpreterName",
+        "lambdaHarnessName",
+        "lambdaHarnessArn",
+        "apiGatewayId",
+        "apiGatewayUrl",
+        "apiGatewayHealthUrl",
+        "lambdaFunctionUrl",
+        "skillsS3Prefix",
+        "defaultSkills",
+        "defaultSkillUris",
+        "webS3Prefix",
+        "cloudfrontId",
+        "cloudfrontDomain",
+        "cloudfrontUrl",
+        "websiteUrl",
     ]
     for key in resource_keys:
         config_data.pop(key, None)
@@ -155,6 +185,158 @@ def update_config_json(deletion_summary: Dict):
         logger.info(f"✓ Updated {config_path}")
     except Exception as e:
         logger.warning(f"Could not update {config_path}: {e}")
+
+
+def _find_http_api_by_name(api_name: str) -> Optional[Dict]:
+    paginator = apigatewayv2_client.get_paginator("get_apis")
+    for page in paginator.paginate():
+        for api in page.get("Items", []):
+            if api.get("Name") == api_name:
+                return api
+    return None
+
+
+def delete_api_gateway(config: Dict) -> bool:
+    """Delete HTTP API for Harness invoke."""
+    logger.info(f"[1a] Deleting API Gateway HTTP API: {api_harness_name}")
+    api_id = config.get("apiGatewayId")
+    if not api_id:
+        found = _find_http_api_by_name(api_harness_name)
+        api_id = found["ApiId"] if found else None
+    if not api_id:
+        logger.warning(f"HTTP API not found: {api_harness_name}")
+        return False
+    try:
+        apigatewayv2_client.delete_api(ApiId=api_id)
+        logger.info(f"✓ HTTP API deleted: {api_id}")
+        return True
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "NotFoundException":
+            logger.warning(f"HTTP API not found: {api_id}")
+            return False
+        raise
+
+
+def delete_lambda_function_url(function_name: str) -> bool:
+    """Delete Lambda Function URL if present."""
+    try:
+        lambda_client.delete_function_url_config(FunctionName=function_name)
+        logger.info(f"✓ Function URL deleted: {function_name}")
+        return True
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ResourceNotFoundException":
+            logger.warning(f"Function URL not found: {function_name}")
+            return False
+        raise
+
+
+def delete_code_interpreter(config: Dict) -> bool:
+    """Delete custom AgentCore Code Interpreter used by the harness."""
+    logger.info("[1d] Deleting AgentCore Code Interpreter")
+    code_id = (config.get("codeInterpreterId") or "").strip()
+    code_name = (config.get("codeInterpreterName") or "businfo_code").strip()
+
+    if not code_id:
+        try:
+            token = None
+            while True:
+                kw: Dict = {"maxResults": 50}
+                if token:
+                    kw["nextToken"] = token
+                resp = agentcore_control_client.list_code_interpreters(**kw)
+                for item in resp.get("codeInterpreterSummaries") or []:
+                    if item.get("name") == code_name:
+                        code_id = item.get("codeInterpreterId") or ""
+                        break
+                if code_id or not resp.get("nextToken"):
+                    break
+                token = resp.get("nextToken")
+        except ClientError as e:
+            logger.warning(f"Could not list code interpreters: {e}")
+
+    if not code_id:
+        logger.warning("Code Interpreter ID not found; skipping")
+        return False
+
+    try:
+        agentcore_control_client.delete_code_interpreter(
+            codeInterpreterId=code_id,
+            clientToken=str(uuid.uuid4()),
+        )
+        logger.info(f"✓ Code Interpreter delete requested: {code_id}")
+        deadline = time.time() + 300
+        while time.time() < deadline:
+            try:
+                agentcore_control_client.get_code_interpreter(
+                    codeInterpreterId=code_id
+                )
+                time.sleep(5)
+            except ClientError as e:
+                if e.response.get("Error", {}).get("Code") == "ResourceNotFoundException":
+                    logger.info(f"✓ Code Interpreter deleted: {code_id}")
+                    return True
+                raise
+        logger.warning(f"Code Interpreter delete still in progress: {code_id}")
+        return True
+    except ClientError as e:
+        if e.response.get("Error", {}).get("Code") == "ResourceNotFoundException":
+            logger.warning(f"Code Interpreter not found: {code_id}")
+            return False
+        raise
+
+
+def delete_harness(config: Dict) -> bool:
+    """Delete AgentCore Harness."""
+    logger.info("[1c] Deleting AgentCore Harness")
+    harness_id = config.get("HARNESS_ID")
+    if not harness_id:
+        harness_name = config.get("harnessName") or project_name.replace("-", "_")
+        try:
+            token = None
+            while True:
+                kw: Dict = {"maxResults": 50}
+                if token:
+                    kw["nextToken"] = token
+                resp = agentcore_control_client.list_harnesses(**kw)
+                for h in resp.get("harnesses") or []:
+                    if h.get("harnessName") == harness_name:
+                        harness_id = h.get("harnessId")
+                        break
+                if harness_id:
+                    break
+                token = resp.get("nextToken")
+                if not token:
+                    break
+        except ClientError as e:
+            logger.warning(f"Could not list harnesses: {e}")
+
+    if not harness_id:
+        logger.warning("Harness ID not found; skipping harness deletion")
+        return False
+
+    try:
+        agentcore_control_client.delete_harness(
+            harnessId=harness_id,
+            clientToken=str(uuid.uuid4()),
+        )
+        logger.info(f"✓ Harness delete requested: {harness_id}")
+        deadline = time.time() + 600
+        while time.time() < deadline:
+            try:
+                agentcore_control_client.get_harness(harnessId=harness_id)
+                time.sleep(5)
+            except ClientError as e:
+                if e.response.get("Error", {}).get("Code") == "ResourceNotFoundException":
+                    logger.info(f"✓ Harness deleted: {harness_id}")
+                    return True
+                raise
+        logger.warning(f"Harness delete still in progress: {harness_id}")
+        return True
+    except ClientError as e:
+        if e.response.get("Error", {}).get("Code") == "ResourceNotFoundException":
+            logger.warning(f"Harness not found: {harness_id}")
+            return False
+        raise
 
 
 def delete_firehose_delivery_stream() -> bool:
@@ -311,6 +493,7 @@ def delete_lambda_functions() -> int:
 
     deleted_count = 0
     for function_name in [
+        lambda_harness_name,
         lambda_kinesis_name,
         lambda_firehose_name,
         lambda_businfo_name,
@@ -407,6 +590,8 @@ def delete_iam_roles() -> int:
         lambda_businfo_role_name,
         lambda_firehose_role_name,
         lambda_kinesis_role_name,
+        lambda_harness_role_name,
+        f"role-harness-for-{project_name}-{region}",
     ]
 
     deleted_count = 0
@@ -498,6 +683,7 @@ def main():
     global region, sts_client, account_id, bucket_name
     global s3_client, iam_client, kinesis_client, dynamodb_client
     global lambda_client, events_client, glue_client, firehose_client
+    global apigatewayv2_client, agentcore_control_client
 
     parser = argparse.ArgumentParser(
         description="AWS Infrastructure Uninstaller for Bus Schedule Analytics"
@@ -517,6 +703,11 @@ def main():
         action="store_true",
         help="Enable debug logging",
     )
+    parser.add_argument(
+        "--harness-only",
+        action="store_true",
+        help="Delete only Harness / API Gateway / lambda-harness resources",
+    )
     args = parser.parse_args()
 
     if args.debug:
@@ -533,6 +724,11 @@ def main():
     events_client = boto3.client("events", region_name=region)
     glue_client = boto3.client("glue", region_name=region)
     firehose_client = boto3.client("firehose", region_name=region)
+    apigatewayv2_client = boto3.client("apigatewayv2", region_name=region)
+    agentcore_control_client = boto3.client(
+        "bedrock-agentcore-control",
+        region_name=region,
+    )
 
     config = load_config()
     bucket_name = config.get("bucketName") or resolve_bucket_name(account_id, region)
@@ -545,11 +741,12 @@ def main():
     logger.info(f"Region: {region}")
     logger.info(f"Account ID: {account_id}")
     logger.info(f"Bucket Name: {bucket_name}")
+    logger.info(f"Harness only: {args.harness_only}")
     logger.info("=" * 60)
 
     if not args.yes:
         print("\n" + "=" * 60)
-        print("WARNING: This will delete all resources created by installer.py")
+        print("WARNING: This will delete resources created by installer.py")
         print("=" * 60)
         response = input("\nAre you sure you want to continue? (yes/no): ")
         if response.lower() != "yes":
@@ -560,18 +757,39 @@ def main():
     deletion_summary = {}
 
     try:
-        deletion_summary["firehose"] = delete_firehose_delivery_stream()
-        deletion_summary["glueCrawler"] = delete_glue_crawler()
-        deletion_summary["glueDatabase"] = delete_glue_database()
-        deletion_summary["eventRule"] = delete_eventbridge_rule()
-        deletion_summary["lambdaEventSourceMappings"] = (
-            delete_lambda_event_source_mappings()
+        # Harness stack first (dependency order)
+        deletion_summary["apiGateway"] = delete_api_gateway(config)
+        deletion_summary["lambdaFunctionUrl"] = delete_lambda_function_url(
+            lambda_harness_name
         )
-        deletion_summary["lambdaFunctions"] = delete_lambda_functions()
-        deletion_summary["dynamodbTable"] = delete_dynamodb_table(config)
-        deletion_summary["kinesisStream"] = delete_kinesis_stream()
-        deletion_summary["iamRoles"] = delete_iam_roles()
-        deletion_summary["s3Bucket"] = delete_s3_bucket()
+        if args.harness_only:
+            deletion_summary["lambdaHarness"] = delete_lambda_function(
+                lambda_harness_name
+            )
+            deletion_summary["harness"] = delete_harness(config)
+            deletion_summary["codeInterpreter"] = delete_code_interpreter(config)
+            deletion_summary["iamRoles"] = 0
+            for role_name in [
+                lambda_harness_role_name,
+                f"role-harness-for-{project_name}-{region}",
+            ]:
+                if delete_iam_role(role_name):
+                    deletion_summary["iamRoles"] += 1
+        else:
+            deletion_summary["firehose"] = delete_firehose_delivery_stream()
+            deletion_summary["glueCrawler"] = delete_glue_crawler()
+            deletion_summary["glueDatabase"] = delete_glue_database()
+            deletion_summary["eventRule"] = delete_eventbridge_rule()
+            deletion_summary["lambdaEventSourceMappings"] = (
+                delete_lambda_event_source_mappings()
+            )
+            deletion_summary["lambdaFunctions"] = delete_lambda_functions()
+            deletion_summary["harness"] = delete_harness(config)
+            deletion_summary["codeInterpreter"] = delete_code_interpreter(config)
+            deletion_summary["dynamodbTable"] = delete_dynamodb_table(config)
+            deletion_summary["kinesisStream"] = delete_kinesis_stream()
+            deletion_summary["iamRoles"] = delete_iam_roles()
+            deletion_summary["s3Bucket"] = delete_s3_bucket()
 
         elapsed_time = time.time() - start_time
         logger.info("")

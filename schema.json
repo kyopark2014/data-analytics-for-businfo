@@ -1,0 +1,42 @@
+[
+    {
+      "Name": "timestamp",
+      "Type": "string"
+    },
+    {
+      "Name": "routeid",
+      "Type": "string"
+    },
+    {
+      "Name": "remainseatcnt",
+      "Type": "string"
+    },
+    {
+      "Name": "plateno",
+      "Type": "string"
+    },
+    {
+      "Name": "predicttime",
+      "Type": "string"
+    },
+    {
+      "Name": "partition_0",
+      "Type": "string",
+      "PartitionKey": "Partition (0)"
+    },
+    {
+      "Name": "partition_1",
+      "Type": "string",
+      "PartitionKey": "Partition (1)"
+    },
+    {
+      "Name": "partition_2",
+      "Type": "string",
+      "PartitionKey": "Partition (2)"
+    },
+    {
+      "Name": "partition_3",
+      "Type": "string",
+      "PartitionKey": "Partition (3)"
+    }
+  ]

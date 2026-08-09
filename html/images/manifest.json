@@ -1,0 +1,13 @@
+{
+  "modelId": "stability.sd3-5-large-v1:0",
+  "region": "us-west-2",
+  "images": [
+    {
+      "filename": "hero.png",
+      "path": "/Users/ksdyb/Documents/src/analytics-for-bus-schedule/html/images/hero.png",
+      "seed": 20260809,
+      "bytes": 2280871,
+      "status": "ok"
+    }
+  ]
+}

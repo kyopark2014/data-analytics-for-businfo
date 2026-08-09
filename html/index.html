@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>센터교통정보</title>
+    <meta
+      name="description"
+      content="서울 역삼동 AI 기반 교통정보 회사 센터교통정보 — AI Agent로 교통 정보를 제공합니다."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Noto+Sans+KR:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="site">
+      <header class="brand-bar">
+        <p class="brand">센터<span>교통정보</span></p>
+        <p class="locale">서울 역삼동 · AI Traffic Desk</p>
+      </header>
+
+      <section class="hero" aria-labelledby="hero-title">
+        <h1 id="hero-title">길 위의 질문을,<br />에이전트가 읽습니다</h1>
+        <p>
+          센터교통정보는 서울시 역삼동에 있는 AI 기반 교통정보 회사입니다.
+          AI Agent를 통해 버스·도로·이동 흐름을 빠르게 파악하고, 필요한 정보를
+          바로 전달합니다.
+        </p>
+        <div class="hero-visual">
+          <img
+            src="./images/hero.png"
+            alt="서울 역삼 일대의 저녁 버스와 도로 풍경"
+            width="1920"
+            height="823"
+          />
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="ask-label">
+        <div class="panel-label" id="ask-label">교통 정보 문의</div>
+        <form class="ask-row" id="ask-form">
+          <input
+            id="prompt"
+            name="prompt"
+            type="text"
+            autocomplete="off"
+            placeholder="예: 센터필드 정류장 출근 시간대 버스 지연 패턴을 알려주세요"
+            required
+          />
+          <button type="submit" id="ask-btn">조회하기</button>
+        </form>
+        <div class="hints" id="hints">
+          <button type="button" data-prompt="센터필드 정류장에서 지금 가장 기다려야 할 버스는 무엇인가요?">
+            센터필드 대기
+          </button>
+          <button type="button" data-prompt="평일과 주말 버스 지연 차이를 간단히 비교해 주세요.">
+            평일 vs 주말
+          </button>
+          <button type="button" data-prompt="출퇴근 시간대 교통 혼잡을 줄이는 이동 팁을 알려주세요.">
+            출퇴근 팁
+          </button>
+        </div>
+        <div
+          class="result"
+          id="result"
+          data-state="idle"
+          role="status"
+          aria-live="polite"
+        >
+          질문을 입력하면 AI Agent가 교통 정보를 조회해 답변합니다.
+        </div>
+      </section>
+
+      <footer class="footer">
+        © 센터교통정보 · Yeoksam, Seoul · Demo powered by AgentCore Harness
+      </footer>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
