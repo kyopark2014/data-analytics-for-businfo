@@ -413,3 +413,8 @@ Centerfield 버스정류장에서 1분단위로 데이터 수집하였다면, ti
 ![noname](https://user-images.githubusercontent.com/52392004/164482382-287acaef-c7bf-4ee8-a644-6ce6573dccac.png)
 
 
+## 실행 결과
+
+CloudFront 도메인에 접속후 아래와 같이 "지난 1시간 동안 도착한 버스 정보를 알려주세요."로 질문하면, Amazon S3에 수집된 버스 정보를 바탕으로 아래와 같은 답변을 얻을 수 있습니다.
+
+<img width="1112" height="835" alt="image" src="https://github.com/user-attachments/assets/dd12ba38-818c-4f06-b45d-94c71a149739" />
