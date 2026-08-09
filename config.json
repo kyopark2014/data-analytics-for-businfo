@@ -35,7 +35,7 @@
   "lambdaHarnessName": "lambda-harness-businfo",
   "lambdaHarnessArn": "arn:aws:lambda:us-west-2:262976740991:function:lambda-harness-businfo",
   "apiGatewayId": "63cjnyntrh",
-  "apiGatewayUrl": "https://63cjnyntrh.execute-api.us-west-2.amazonaws.com/invoke",
+  "apiGatewayUrl": "https://63cjnyntrh.execute-api.us-west-2.amazonaws.com/jobs",
   "apiGatewayHealthUrl": "https://63cjnyntrh.execute-api.us-west-2.amazonaws.com/health",
   "lambdaFunctionUrl": "https://h63wqrfykdecfhu42i77v7h4h40jklml.lambda-url.us-west-2.on.aws/",
   "skillsS3Prefix": "s3://businfo-262976740991-us-west-2/skills/",
@@ -45,5 +45,9 @@
   ],
   "codeInterpreterId": "businfo_code-yowZetrgUP",
   "codeInterpreterArn": "arn:aws:bedrock-agentcore:us-west-2:262976740991:code-interpreter-custom/businfo_code-yowZetrgUP",
-  "codeInterpreterName": "businfo_code"
+  "codeInterpreterName": "businfo_code",
+  "jobsTableName": "dynamodb-businfo-jobs",
+  "jobsTableArn": "arn:aws:dynamodb:us-west-2:262976740991:table/dynamodb-businfo-jobs",
+  "apiJobsUrl": "https://63cjnyntrh.execute-api.us-west-2.amazonaws.com/jobs",
+  "apiGatewayInvokeUrl": "https://63cjnyntrh.execute-api.us-west-2.amazonaws.com/invoke"
 }

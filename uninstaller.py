@@ -26,6 +26,7 @@ bucket_name_prefix = "businfo"
 bucket_name = ""
 stream_name = "businfo-stream"
 table_name = "dynamodb-businfo"
+jobs_table_name = "dynamodb-businfo-jobs"
 glue_database_name = "businfo"
 crawler_name = "translate-parquet-crawler"
 crawler_role_name = "crawler-role-businfo"
@@ -155,6 +156,10 @@ def update_config_json(deletion_summary: Dict):
         "apiGatewayUrl",
         "apiGatewayHealthUrl",
         "lambdaFunctionUrl",
+        "jobsTableName",
+        "jobsTableArn",
+        "apiJobsUrl",
+        "apiGatewayInvokeUrl",
         "skillsS3Prefix",
         "defaultSkills",
         "defaultSkillUris",
@@ -505,6 +510,21 @@ def delete_lambda_functions() -> int:
     return deleted_count
 
 
+def delete_jobs_table(config: Dict) -> bool:
+    """Delete async Harness jobs DynamoDB table."""
+    name = config.get("jobsTableName") or jobs_table_name
+    logger.info(f"Deleting jobs DynamoDB table: {name}")
+    try:
+        dynamodb_client.delete_table(TableName=name)
+        logger.info(f"✓ Jobs table deleted: {name}")
+        return True
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ResourceNotFoundException":
+            logger.warning(f"Jobs table not found: {name}")
+            return False
+        raise
+
+
 def delete_dynamodb_table(config: Dict) -> bool:
     """Disable Kinesis streaming and delete DynamoDB table."""
     logger.info(f"[7/11] Deleting DynamoDB table: {table_name}")
@@ -766,6 +786,7 @@ def main():
             deletion_summary["lambdaHarness"] = delete_lambda_function(
                 lambda_harness_name
             )
+            deletion_summary["jobsTable"] = delete_jobs_table(config)
             deletion_summary["harness"] = delete_harness(config)
             deletion_summary["codeInterpreter"] = delete_code_interpreter(config)
             deletion_summary["iamRoles"] = 0
@@ -786,6 +807,7 @@ def main():
             deletion_summary["lambdaFunctions"] = delete_lambda_functions()
             deletion_summary["harness"] = delete_harness(config)
             deletion_summary["codeInterpreter"] = delete_code_interpreter(config)
+            deletion_summary["jobsTable"] = delete_jobs_table(config)
             deletion_summary["dynamodbTable"] = delete_dynamodb_table(config)
             deletion_summary["kinesisStream"] = delete_kinesis_stream()
             deletion_summary["iamRoles"] = delete_iam_roles()

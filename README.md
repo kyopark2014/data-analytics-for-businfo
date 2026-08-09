@@ -91,7 +91,7 @@ flowchart TB
 
 ## Agent AI 활용
 
-버스 수집·적재 파이프라인 위에 **AgentCore Harness** 기반 분석 에이전트와 **CloudFront 데모 웹**을 붙였습니다. 사용자는 웹에서 자연어로 교통·버스 관련 질문을 입력하고, 요청은 `API Gateway → Lambda → InvokeHarness` 경로로 전달된 뒤 답변이 화면에 표시됩니다. 기존 businfo 수집 인프라는 그대로 유지하며, Agent 계층은 선택적으로 배포·삭제할 수 있습니다.
+버스 수집·적재 파이프라인 위에 **AgentCore Harness** 기반 분석 에이전트와 **CloudFront 데모 웹**을 붙였습니다. 사용자는 웹에서 자연어로 교통·버스 관련 질문을 입력하고, 요청은 **비동기 job(제출 + 폴링)** 경로로 처리된 뒤 답변이 화면에 표시됩니다. 기존 businfo 수집 인프라는 그대로 유지하며, Agent 계층은 선택적으로 배포·삭제할 수 있습니다.
 
 ### 목표와 범위
 
@@ -99,26 +99,82 @@ flowchart TB
 |------|------|
 | **목적** | 수집된 버스/교통 데이터와 도구를 활용해, 사용자 질문에 대한 분석형 답변을 제공하는 데모 |
 | **브랜드(데모)** | **센터교통정보** — 서울시 역삼동 소재 AI 기반 교통정보 회사, AI Agent로 교통 정보를 전달 |
-| **호출 경로** | CloudFront(정적 웹) → API Gateway HTTP API → Lambda → Bedrock AgentCore Harness |
-| **상태** | **Stateless** — AgentCore Memory 미사용 (`memory.disabled`) |
+| **호출 경로** | CloudFront(정적 웹) → API Gateway `POST /jobs` + `GET /jobs/{jobId}` → Lambda(접수/폴링) → Lambda worker(async) → Bedrock AgentCore Harness |
+| **상태** | AgentCore Memory 미사용 (`memory.disabled`). Job 상태는 DynamoDB `dynamodb-businfo-jobs`에 저장 |
 | **네트워크** | Harness `networkMode=PUBLIC` (VPC / S3 Files 미사용) |
-| **의도적 제외** | Cognito, AgentCore Gateway(MCP KB), S3 Vectors KB, ECS UI, VPC, S3 Files |
+| **의도적 제외** | Cognito, AgentCore Gateway(MCP KB), S3 Vectors KB, ECS UI, VPC, ALB, S3 Files |
 
-중간 단계로 API Gateway–Harness 형태를 먼저 구축했고, 이후 CloudFront에서 동일 API를 호출하도록 웹을 연결했습니다.
+### 타임아웃 이슈 검토와 비동기 전환 배경
 
-### Agent 계층 Architecture
+데모 웹([CloudFront](https://d3jev8z3khg6kp.cloudfront.net/))에서 분석형 질문을 하면 `"요청 시간이 초과되었습니다"`가 발생했습니다. 원인을 계층별로 분리하면 다음과 같습니다.
+
+| 의심 대상 | 판정 | 근거 |
+|-----------|------|------|
+| **CloudFront** | 원인 아님 | 정적 HTML/JS/CSS만 S3에서 제공. API를 프록시하지 않음 |
+| **ALB** | 해당 없음 | 본 구성에 ALB 없음 |
+| **Lambda / Harness runtime** | 정상 | `GET /health` 200, 짧은 인사 질문은 `POST /invoke`로 ~7초 내 200 |
+| **API Gateway 통합 타임아웃** | **원인** | HTTP API `TimeoutInMillis=30000`(~29초). Athena/skill을 쓰는 분석 질문은 ~30.5초 후 `503 {"message":"Service Unavailable"}` |
+| **브라우저 abort** | 증상 증폭 | `app.js`가 예전에는 29초에 `AbortController`로 끊음 → 위 메시지 표시 |
+
+타임아웃 한도 비교:
+
+| 계층 | 한도 | 비고 |
+|------|------|------|
+| API Gateway HTTP API 통합 | ~29초 | 동기 `/invoke`의 하드 리밋 |
+| Lambda (`lambda-harness-businfo`) | 300초 | Worker가 Harness를 끝까지 실행 가능 |
+| Harness `timeoutSeconds` | 300초 | 에이전트 실행 상한 |
+| CloudFront origin read (API를 CF 뒤에 둘 경우) | 최대 ~180초 | 현재 API는 브라우저→API GW 직접 호출이라 해당 없음 |
+
+대안 비교 후 **비동기 제출+폴링**을 채택했습니다.
+
+| 방식 | 긴 질의 | 장점 | 단점 |
+|------|---------|------|------|
+| 동기 API GW → Lambda | ❌ ~29초 | 단순 | 분석 질문 실패 (기존) |
+| ALB → Lambda 동기 | ✅ (idle timeout 상향 시) | 한 번의 HTTP로 결과 | VPC/ALB 비용·구성, 브라우저는 수분 hang, CF 경유 시 또 한도 |
+| Lambda Function URL 동기 | ✅ ~300초 | 구현 간단 | 브라우저용으로 `AWS_IAM` SigV4 필요 |
+| **비동기 POST /jobs + 폴링** | ✅ (Lambda/Harness 300초) | API GW 한도 회피, ALB 불필요, 진행 상태 UX, job 재조회 | DynamoDB job 테이블·프론트 폴링 필요 |
+
+### Agent 계층 Architecture (비동기 jobs)
+
+```mermaid
+sequenceDiagram
+  participant Web as CloudFront 웹
+  participant APIGW as API Gateway
+  participant API as Lambda API
+  participant DB as DynamoDB jobs
+  participant Worker as Lambda Worker
+  participant H as Harness
+
+  Web->>APIGW: POST /jobs {prompt, sessionId}
+  APIGW->>API: sync (~1s)
+  API->>DB: status=QUEUED
+  API->>Worker: Invoke Event (async)
+  API-->>Web: 202 {jobId, status}
+  Worker->>DB: status=RUNNING
+  Worker->>H: InvokeHarness (최대 ~300s)
+  H-->>Worker: stream → text
+  Worker->>DB: status=SUCCEEDED + result
+  loop 2초마다 (최대 5분)
+    Web->>APIGW: GET /jobs/{jobId}
+    APIGW->>API: sync
+    API->>DB: GetItem
+    API-->>Web: QUEUED \| RUNNING \| SUCCEEDED+result
+  end
+```
 
 ```mermaid
 flowchart LR
   User["사용자 브라우저"] --> CF["CloudFront<br/>센터교통정보 웹"]
   CF --> S3Web["S3 web/<br/>html 정적 파일"]
-  User -->|"POST /invoke<br/>JSON prompt"| APIGW["API Gateway<br/>api-harness-businfo"]
+  User -->|"POST /jobs"| APIGW["API Gateway<br/>api-harness-businfo"]
+  User -->|"GET /jobs/id 폴링"| APIGW
   APIGW --> LambdaH["Lambda<br/>lambda-harness-businfo"]
-  LambdaH -->|"InvokeHarness<br/>스트림 버퍼링"| Harness["AgentCore Harness<br/>businfo PUBLIC"]
+  LambdaH -->|"Put/Get job"| Jobs[("DynamoDB<br/>dynamodb-businfo-jobs")]
+  LambdaH -->|"async Event"| Worker["같은 Lambda<br/>jobWorker"]
+  Worker -->|"InvokeHarness"| Harness["AgentCore Harness<br/>businfo PUBLIC"]
   Harness --> Tools["code / aws_knowledge"]
   Harness --> Skill["S3 skill: businfo"]
   Skill --> Data["Athena · Glue · S3 businfo"]
-  LambdaH -->|"JSON result"| User
 ```
 
 데이터 수집 파이프라인(EventBridge → DynamoDB → Kinesis → Firehose → S3/Athena)과 Agent 계층은 분리되어 있습니다. Agent는 분석·질의에 집중하고, 파이프라인은 그대로 데이터를 쌓습니다.
@@ -143,30 +199,40 @@ flowchart LR
 
 재설치 시 memory 비활성·PUBLIC·systemPrompt·tools·skills를 `ensure_*` 헬퍼로 맞추고, `skills/`를 S3에 업로드합니다. Lambda는 `DEFAULT_SKILLS=businfo`를 InvokeHarness에 전달하며, code 인터프리터는 harness execution role로 S3 sync 후 `/tmp/businfo/scripts/query_businfo.py`를 실행합니다.
 
-#### 2. API Gateway + Lambda 프록시
+#### 2. 비동기 Jobs API (API Gateway + Lambda + DynamoDB)
 
 | 리소스 | 이름 / 역할 |
 |--------|-------------|
 | HTTP API | `api-harness-businfo` |
-| Routes | `POST /invoke`, `GET /health`, `OPTIONS /invoke` |
-| Lambda | `lambda-harness-businfo` (`python3.12`, timeout 300s, memory 512MB) |
+| Routes | `POST /jobs`, `GET /jobs/{jobId}`, `GET /health`, `POST /invoke`(짧은 동기·호환), OPTIONS |
+| Lambda | `lambda-harness-businfo` (`python3.12`, timeout 300s, memory 512MB) — API 핸들러 + async worker 겸용 |
+| Jobs 테이블 | `dynamodb-businfo-jobs` (PK `jobId`, TTL `ttl` 24h, on-demand) |
 | 코드 | [`lambda-harness/lambda_function.py`](lambda-harness/lambda_function.py) |
 
-요청 본문 예:
+**작업 생성** `POST /jobs`:
 
 ```json
 { "prompt": "센터필드 정류장 출근 시간대 지연 패턴을 알려주세요", "sessionId": "선택" }
 ```
 
-응답 예:
+응답 `202`:
 
 ```json
-{ "result": "…에이전트 답변…", "sessionId": "…" }
+{ "jobId": "…", "status": "QUEUED", "sessionId": "…", "pollPath": "/jobs/…" }
 ```
 
-Lambda는 `bedrock-agentcore.invoke_harness` 스트림을 읽어 텍스트를 모은 뒤 JSON으로 반환합니다. 호출 시 `s3://{bucket}/skills/businfo/`를 `skills`로 붙여 Athena 조회 CLI를 에이전트가 쓸 수 있게 합니다. CORS는 `*`로 열어 두어 CloudFront 오리진에서 브라우저 호출이 가능합니다.
+**상태 조회** `GET /jobs/{jobId}`:
 
-**타임아웃 참고:** API Gateway 통합 타임아웃은 약 29초입니다. 긴 분석은 같은 Lambda의 **Function URL**(Auth: `AWS_IAM`, timeout 300초)을 사용합니다. URL은 `config.json`의 `lambdaFunctionUrl`에 저장됩니다.
+| status | 의미 |
+|--------|------|
+| `QUEUED` | 접수됨, worker 대기/시작 직전 |
+| `RUNNING` | InvokeHarness 실행 중 |
+| `SUCCEEDED` | `result`에 답변 텍스트 |
+| `FAILED` | `error`에 실패 사유 |
+
+Lambda는 job을 DynamoDB에 쓴 뒤 **같은 함수를 `InvocationType=Event`로 비동기 호출**합니다. Worker가 `invoke_harness` 스트림을 모아 `SUCCEEDED`/`FAILED`로 갱신합니다. API Gateway를 거치는 요청(`/jobs`, `/jobs/{id}`, `/health`)은 수 초 이내라 ~29초 한도에 걸리지 않습니다.
+
+CORS는 `*`로 열어 CloudFront 오리진에서 브라우저 호출이 가능합니다. `POST /invoke` 동기 경로는 짧은 스모크용으로 남겨 두었으며, 웹 UI는 사용하지 않습니다.
 
 #### 3. 데모 웹 — 센터교통정보 (`html/`)
 
@@ -174,8 +240,8 @@ Lambda는 `bedrock-agentcore.invoke_harness` 스트림을 읽어 텍스트를 �
 |------|------|
 | [`html/index.html`](html/index.html) | 원페이지: 브랜드·소개·질의 UI·결과 영역 |
 | [`html/styles.css`](html/styles.css) | 틸/잉크 톤, full-bleed 히어로, 모션 |
-| [`html/app.js`](html/app.js) | `fetch(apiGatewayUrl)`로 `/invoke` 호출, 힌트 버튼·로딩/에러 상태 |
-| [`html/config.js`](html/config.js) | installer가 생성하는 `window.APP_CONFIG` (`apiGatewayUrl` 등) |
+| [`html/app.js`](html/app.js) | `POST /jobs` 후 2초 간격 폴링(최대 5분), 힌트 버튼·로딩/에러 상태 |
+| [`html/config.js`](html/config.js) | installer가 생성하는 `window.APP_CONFIG` (`apiJobsUrl`, health 등) |
 | [`html/images/hero.png`](html/images/hero.png) | 히어로 이미지 (생성 스크립트 결과) |
 
 배포 시 `html/` 전체를 S3 `{bucket}/web/`에 올리고, CloudFront(`CloudFront-S3-for-businfo`)가 `OriginPath=/web`, `DefaultRootObject=index.html`로 제공합니다. OAI + 버킷 정책으로 `web/*`만 CF에서 읽습니다.
@@ -184,9 +250,9 @@ Lambda는 `bedrock-agentcore.invoke_harness` 스트림을 읽어 텍스트를 �
 
 1. CloudFront URL로 페이지 접속  
 2. 교통 관련 질문 입력(또는 힌트 버튼)  
-3. 브라우저 → API Gateway `POST /invoke`  
-4. Lambda → Harness → 답변 텍스트  
-5. 결과 영역에 표시  
+3. 브라우저 → `POST /jobs` → `jobId` 수신  
+4. `GET /jobs/{jobId}` 폴링 (`QUEUED` → `RUNNING` → `SUCCEEDED`)  
+5. Worker가 Harness/Athena 분석을 끝낸 뒤 결과 영역에 표시  
 
 #### 4. 히어로 이미지 생성
 
@@ -201,10 +267,12 @@ python3 html/generate_images.py
 
 #### 5. 스모크 테스트
 
-[`test_invoke_harness.py`](test_invoke_harness.py)는 UI 없이 `config.json`의 `HARNESS_ARN`으로 Data Plane `InvokeHarness`를 직접 호출합니다.
-
 ```bash
+# Harness 직접 호출 (UI/API 없음)
 python3 test_invoke_harness.py "버스 지연 분석 에이전트가 준비되었는지 한 문장으로 답하세요."
+
+# 비동기 Jobs API end-to-end (POST /jobs → 폴링)
+python3 test_api_gateway.py "센터필드 평일 vs 주말 대기 패턴을 짧게 요약해 주세요."
 ```
 
 ### config.json에 기록되는 Agent/Web 키
@@ -215,9 +283,12 @@ python3 test_invoke_harness.py "버스 지연 분석 에이전트가 준비되�
 | `harnessExecutionRole` | Harness IAM role ARN |
 | `codeInterpreterArn` / `codeInterpreterId` | businfo용 커스텀 Code Interpreter |
 | `skillsS3Prefix` / `defaultSkills` / `defaultSkillUris` | businfo skill S3 위치 |
-| `lambdaHarnessArn` / `lambdaHarnessName` | Invoke 프록시 Lambda |
-| `apiGatewayUrl` / `apiGatewayHealthUrl` / `apiGatewayId` | HTTP API 엔드포인트 |
-| `lambdaFunctionUrl` | 장기 호출용 Function URL (IAM) |
+| `lambdaHarnessArn` / `lambdaHarnessName` | Jobs API + worker Lambda |
+| `jobsTableName` / `jobsTableArn` | 비동기 job 상태 테이블 |
+| `apiJobsUrl` / `apiGatewayUrl` | `POST /jobs` 엔드포인트 (웹 기본) |
+| `apiGatewayInvokeUrl` | 동기 `POST /invoke` (짧은 스모크용) |
+| `apiGatewayHealthUrl` / `apiGatewayId` | health 및 API id |
+| `lambdaFunctionUrl` | Function URL (IAM, 선택적 장기 호출) |
 | `cloudfrontUrl` / `websiteUrl` / `cloudfrontId` / `cloudfrontDomain` | 데모 웹 URL |
 | `webS3Prefix` | 정적 파일 prefix (`web`) |
 
@@ -227,38 +298,38 @@ python3 test_invoke_harness.py "버스 지연 분석 에이전트가 준비되�
 # 전체: businfo 파이프라인 + Harness/API + 웹
 python3 installer.py
 
-# Agent API만 (기존 S3 버킷 사용)
+# Agent API만 (jobs 테이블 + Harness + API + Lambda, 기존 S3 버킷 사용)
 python3 installer.py --harness-only
 
-# 웹만 (config의 apiGatewayUrl을 html/config.js에 주입 후 업로드)
+# 웹만 (apiJobsUrl을 html/config.js에 주입 후 업로드)
 python3 installer.py --web-only
 
 # 파이프라인만 / 웹 생략
 python3 installer.py --skip-harness
 python3 installer.py --skip-web
 
-# Agent·API·관련 IAM만 삭제
+# Agent·API·jobs 테이블·관련 IAM만 삭제
 python3 uninstaller.py --harness-only
 ```
 
-권장 순서(최초 Agent 데모):
+권장 순서(기존 동기 `/invoke`에서 비동기로 갱신할 때):
 
 ```bash
-python3 installer.py --harness-only   # Harness + API + Lambda (+ 기본 웹 업로드)
-python3 html/generate_images.py       # 히어로 이미지 생성
-python3 installer.py --web-only       # 이미지·최신 html 반영, CloudFront invalidation
+python3 installer.py --harness-only   # jobs 테이블·라우트·Lambda·웹 config 갱신
+python3 test_api_gateway.py "짧은 분석 질문"   # E2E 확인
+# (이미지 변경 시) python3 html/generate_images.py && python3 installer.py --web-only
 ```
 
 ### 관련 소스 위치
 
 | 경로 | 설명 |
 |------|------|
-| [`installer.py`](installer.py) | businfo + Harness + API GW + CloudFront/web 배포 |
-| [`uninstaller.py`](uninstaller.py) | 역순 삭제 (`--harness-only` 지원) |
-| [`lambda-harness/`](lambda-harness/) | API/Function URL → InvokeHarness 프록시 |
-| [`html/`](html/) | 센터교통정보 정적 데모 |
+| [`installer.py`](installer.py) | businfo + Harness + jobs 테이블 + API GW + CloudFront/web 배포 |
+| [`uninstaller.py`](uninstaller.py) | 역순 삭제 (`--harness-only` 지원, jobs 테이블 포함) |
+| [`lambda-harness/`](lambda-harness/) | `/jobs` API + async worker → InvokeHarness |
+| [`html/`](html/) | 센터교통정보 정적 데모 (폴링 UI) |
 | [`test_invoke_harness.py`](test_invoke_harness.py) | Harness 직접 호출 스모크 (businfo skill 포함) |
-| [`test_api_gateway.py`](test_api_gateway.py) | API Gateway → Lambda → Harness 스모크 |
+| [`test_api_gateway.py`](test_api_gateway.py) | `POST /jobs` + 폴링 E2E 스모크 |
 | [`skills/businfo/`](skills/businfo/) | Athena 버스 조회 Agent Skill |
 | [`config.json`](config.json) | 배포 산출물(엔드포인트·ARN) |
 
@@ -328,7 +399,8 @@ pip install boto3
 | Glue Database / Crawler | `businfo` / `translate-parquet-crawler` |
 | Kinesis Data Firehose | `businfo-delivery-stream` |
 | AgentCore Harness | `businfo` (PUBLIC, memory disabled) |
-| API Gateway HTTP API | `api-harness-businfo` (`POST /invoke`, `GET /health`) |
+| DynamoDB (jobs) | `dynamodb-businfo-jobs` (async job status/result, TTL 24h) |
+| API Gateway HTTP API | `api-harness-businfo` (`POST /jobs`, `GET /jobs/{jobId}`, `GET /health`, `POST /invoke`) |
 | CloudFront + S3 web | `CloudFront-S3-for-businfo` → `s3://…/web/` (`html/`) |
 
 **인프라 생성**
@@ -343,14 +415,14 @@ python3 installer.py --region ap-northeast-2
 python3 installer.py --debug
 ```
 
-배포 후 `config.json`에 `HARNESS_ARN`, `apiGatewayUrl`, `lambdaFunctionUrl`, `cloudfrontUrl` / `websiteUrl` 등이 기록됩니다.
+배포 후 `config.json`에 `HARNESS_ARN`, `apiJobsUrl`, `jobsTableName`, `lambdaFunctionUrl`, `cloudfrontUrl` / `websiteUrl` 등이 기록됩니다.
 
 - 데모 웹: `html/` (회사명 **센터교통정보**) → S3 `web/` → CloudFront
 - 히어로 이미지: `python3 html/generate_images.py` (Bedrock SD 3.5 Large) → `html/images/hero.png`
-- 웹에서 질문 입력 → API Gateway → Lambda → Harness → 결과 표시
-- 짧은 호출: `POST {apiGatewayUrl}` body `{"prompt":"..."}` (API GW 통합 타임아웃 ~29초)
-- 긴 분석: `lambdaFunctionUrl` (IAM SigV4, Lambda timeout 300초)
+- 웹에서 질문 입력 → `POST /jobs` → 폴링 `GET /jobs/{jobId}` → Worker → Harness → 결과 표시
+- 비동기 E2E 스모크: `python3 test_api_gateway.py "질문"`
 - 직접 호출 스모크: `python3 test_invoke_harness.py "질문"`
+- 동기 `/invoke`는 짧은 스모크용으로만 유지 (API GW ~29초 한도)
 
 **인프라 삭제**
 

@@ -6,16 +6,20 @@
   const hints = document.getElementById("hints");
 
   const cfg = window.APP_CONFIG || {};
-  const invokeUrl = String(cfg.apiGatewayUrl || "")
+  const jobsUrl = String(cfg.apiJobsUrl || cfg.apiGatewayUrl || "")
     .trim()
     .replace(/\/$/, "");
   const healthUrl =
     String(cfg.apiGatewayHealthUrl || "").trim() ||
-    (invokeUrl.endsWith("/invoke")
-      ? invokeUrl.slice(0, -"/invoke".length) + "/health"
-      : "");
+    (jobsUrl.endsWith("/jobs")
+      ? jobsUrl.slice(0, -"/jobs".length) + "/health"
+      : jobsUrl.endsWith("/invoke")
+        ? jobsUrl.slice(0, -"/invoke".length) + "/health"
+        : "");
 
   const SESSION_KEY = "centerTrafficSessionId";
+  const POLL_INTERVAL_MS = 2000;
+  const POLL_MAX_MS = 5 * 60 * 1000;
 
   if (window.marked && typeof window.marked.setOptions === "function") {
     window.marked.setOptions({
@@ -66,7 +70,6 @@
         id =
           (crypto.randomUUID && crypto.randomUUID()) ||
           "sess-" + Date.now() + "-" + Math.random().toString(16).slice(2);
-        // Keep >= 33 chars (same recommendation as Lambda / test_api_gateway.py)
         while (id.length < 33) id += "-x";
         sessionStorage.setItem(SESSION_KEY, id);
       }
@@ -76,6 +79,12 @@
     }
   }
 
+  function sleep(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
+
   async function checkHealth() {
     if (!healthUrl) return;
     try {
@@ -83,84 +92,129 @@
         method: "GET",
         headers: { Accept: "application/json" },
       });
-      const data = await resp.json().catch(() => ({}));
+      const data = await resp.json().catch(function () {
+        return {};
+      });
       if (!resp.ok) {
         throw new Error(data.error || "Health check failed (" + resp.status + ")");
       }
       if (data.harnessConfigured === false) {
         throw new Error("Lambda에 HARNESS_ARN이 설정되지 않았습니다.");
       }
+      if (data.jobsTableConfigured === false) {
+        throw new Error(
+          "Lambda에 JOBS_TABLE이 설정되지 않았습니다. installer.py --harness-only 를 다시 실행하세요."
+        );
+      }
     } catch (err) {
-      // Non-fatal for invoke, but surface a clear message when health is unreachable.
       console.warn("health check:", err);
     }
+  }
+
+  async function createJob(prompt, sessionId) {
+    const response = await fetch(jobsUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ prompt: prompt, sessionId: sessionId }),
+    });
+    const data = await response.json().catch(function () {
+      return {};
+    });
+    if (!response.ok && response.status !== 202) {
+      throw new Error(data.error || "작업 생성 실패 (" + response.status + ")");
+    }
+    if (!data.jobId) {
+      throw new Error(data.error || "jobId가 응답에 없습니다.");
+    }
+    return data;
+  }
+
+  async function getJob(jobId) {
+    var url = jobsUrl.replace(/\/$/, "") + "/" + encodeURIComponent(jobId);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    const data = await response.json().catch(function () {
+      return {};
+    });
+    if (!response.ok) {
+      throw new Error(data.error || "작업 조회 실패 (" + response.status + ")");
+    }
+    return data;
+  }
+
+  async function pollJob(jobId) {
+    var started = Date.now();
+    var lastStatus = "";
+    while (Date.now() - started < POLL_MAX_MS) {
+      var job = await getJob(jobId);
+      var status = String(job.status || "");
+      if (status !== lastStatus) {
+        lastStatus = status;
+        if (status === "QUEUED") {
+          setResult("loading", "요청을 접수했습니다. 에이전트 작업을 기다리는 중…");
+        } else if (status === "RUNNING") {
+          setResult("loading", "에이전트가 교통 정보를 조회·분석하는 중입니다…");
+        }
+      }
+      if (status === "SUCCEEDED") {
+        return job;
+      }
+      if (status === "FAILED") {
+        throw new Error(job.error || "분석 작업이 실패했습니다.");
+      }
+      await sleep(POLL_INTERVAL_MS);
+    }
+    throw new Error(
+      "분석이 예상보다 오래 걸립니다. 잠시 후 다시 시도하거나 질문을 짧게 줄여 주세요."
+    );
   }
 
   async function ask(prompt) {
     const q = (prompt || "").trim();
     if (!q) return;
 
-    if (!invokeUrl) {
+    if (!jobsUrl) {
       setResult(
         "error",
-        "API 주소가 설정되지 않았습니다. config.js의 apiGatewayUrl을 확인하거나 python installer.py --web-only 를 실행하세요."
+        "API 주소가 설정되지 않았습니다. config.js의 apiJobsUrl을 확인하거나 python installer.py --web-only 를 실행하세요."
       );
       return;
     }
 
     button.disabled = true;
-    setResult("loading", "에이전트가 교통 정보를 조회하는 중입니다…");
+    setResult("loading", "요청을 접수하는 중입니다…");
 
     const sessionId = getSessionId();
-    // Match test_api_gateway.py: POST {apiGatewayUrl} body { prompt, sessionId }
-    const payload = { prompt: q, sessionId: sessionId };
 
     try {
       await checkHealth();
 
-      const controller = new AbortController();
-      // API Gateway integration timeout ~29s (same as test_api_gateway.py client)
-      const timer = setTimeout(function () {
-        controller.abort();
-      }, 29000);
-
-      const response = await fetch(invokeUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-
-      const data = await response.json().catch(function () {
-        return {};
-      });
-
-      if (!response.ok) {
-        throw new Error(data.error || "요청 실패 (" + response.status + ")");
-      }
-      if (data.error && !data.result) {
-        throw new Error(data.error);
-      }
-
-      if (data.sessionId) {
+      const created = await createJob(q, sessionId);
+      if (created.sessionId) {
         try {
-          sessionStorage.setItem(SESSION_KEY, data.sessionId);
+          sessionStorage.setItem(SESSION_KEY, created.sessionId);
         } catch (_) {}
       }
 
-      setResult("idle", data.result || "(응답이 비어 있습니다)", {
+      setResult("loading", "에이전트가 교통 정보를 조회하는 중입니다…");
+      const job = await pollJob(created.jobId);
+
+      if (job.sessionId) {
+        try {
+          sessionStorage.setItem(SESSION_KEY, job.sessionId);
+        } catch (_) {}
+      }
+
+      setResult("idle", job.result || "(응답이 비어 있습니다)", {
         markdown: true,
       });
     } catch (err) {
-      var message =
-        err && err.name === "AbortError"
-          ? "요청 시간이 초과되었습니다. 질문을 짧게 줄이거나 잠시 후 다시 시도해 주세요."
-          : (err && err.message) || String(err);
-      setResult("error", message);
+      setResult("error", (err && err.message) || String(err));
     } finally {
       button.disabled = false;
     }

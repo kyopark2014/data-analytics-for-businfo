@@ -4,8 +4,8 @@ AWS Infrastructure Installer using boto3
 This script creates AWS infrastructure resources defined in cdk/lib/cdk-stack.ts.
 CDK deploy is replaced by this boto3 installer (see ref/installer.py for the pattern).
 
-Also provisions API Gateway → Lambda → AgentCore Harness (PUBLIC, memory disabled)
-for bus schedule analytics.
+Also provisions async Jobs API (API Gateway + DynamoDB + Lambda worker)
+→ AgentCore Harness (PUBLIC, memory disabled) for bus schedule analytics.
 """
 
 import argparse
@@ -38,6 +38,7 @@ bucket_name_prefix = "businfo"
 bucket_name = ""
 stream_name = "businfo-stream"
 table_name = "dynamodb-businfo"
+jobs_table_name = "dynamodb-businfo-jobs"
 glue_database_name = "businfo"
 crawler_name = "translate-parquet-crawler"
 crawler_role_name = "crawler-role-businfo"
@@ -1911,14 +1912,77 @@ def build_default_harness_skills(s3_bucket_name: str) -> List[Dict]:
     ]
 
 
-def create_lambda_harness(harness_arn: str, s3_bucket: str) -> str:
-    """Deploy Lambda that proxies API requests to InvokeHarness."""
+def create_jobs_table() -> Dict[str, str]:
+    """Create DynamoDB table for async Harness job status/results (TTL 24h)."""
+    logger.info(f"Creating jobs DynamoDB table: {jobs_table_name}")
+    try:
+        dynamodb_client.create_table(
+            TableName=jobs_table_name,
+            KeySchema=[{"AttributeName": "jobId", "KeyType": "HASH"}],
+            AttributeDefinitions=[
+                {"AttributeName": "jobId", "AttributeType": "S"},
+            ],
+            BillingMode="PAY_PER_REQUEST",
+            Tags=[
+                {"Key": "Project", "Value": project_name},
+                {"Key": "Purpose", "Value": "harness-async-jobs"},
+            ],
+        )
+    except ClientError as e:
+        if e.response["Error"]["Code"] != "ResourceInUseException":
+            raise
+        logger.warning(f"Jobs table already exists: {jobs_table_name}")
+
+    waiter = dynamodb_client.get_waiter("table_exists")
+    waiter.wait(TableName=jobs_table_name)
+    for _ in range(30):
+        desc = dynamodb_client.describe_table(TableName=jobs_table_name)
+        if desc["Table"]["TableStatus"] == "ACTIVE":
+            break
+        time.sleep(2)
+    else:
+        raise TimeoutError(f"Jobs table {jobs_table_name} did not become ACTIVE")
+
+    try:
+        dynamodb_client.update_time_to_live(
+            TableName=jobs_table_name,
+            TimeToLiveSpecification={"Enabled": True, "AttributeName": "ttl"},
+        )
+        logger.info("✓ Jobs table TTL enabled on attribute 'ttl'")
+    except ClientError as e:
+        # Already enabled / in progress is fine
+        code = e.response["Error"]["Code"]
+        if code not in (
+            "ValidationException",
+            "ResourceInUseException",
+        ):
+            logger.warning(f"Could not enable TTL on {jobs_table_name}: {e}")
+
+    table_arn = dynamodb_client.describe_table(TableName=jobs_table_name)["Table"][
+        "TableArn"
+    ]
+    logger.info(f"✓ Jobs table ready: {table_arn}")
+    return {"jobsTableName": jobs_table_name, "jobsTableArn": table_arn}
+
+
+def create_lambda_harness(
+    harness_arn: str, s3_bucket: str, jobs_table: str
+) -> str:
+    """Deploy Lambda: API jobs API + async worker → InvokeHarness."""
     logger.info(f"Creating Lambda: {lambda_harness_name}")
+
+    jobs_table_arn = (
+        f"arn:aws:dynamodb:{region}:{account_id}:table/{jobs_table}"
+    )
+    lambda_arn = (
+        f"arn:aws:lambda:{region}:{account_id}:function:{lambda_harness_name}"
+    )
 
     invoke_policy = {
         "Version": "2012-10-17",
         "Statement": [
             {
+                "Sid": "InvokeHarness",
                 "Effect": "Allow",
                 "Action": [
                     "bedrock-agentcore:InvokeHarness",
@@ -1926,7 +1990,25 @@ def create_lambda_harness(harness_arn: str, s3_bucket: str) -> str:
                     "bedrock-agentcore:InvokeAgentRuntimeForUser",
                 ],
                 "Resource": ["*"],
-            }
+            },
+            {
+                "Sid": "JobsTable",
+                "Effect": "Allow",
+                "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DeleteItem",
+                    "dynamodb:DescribeTable",
+                ],
+                "Resource": [jobs_table_arn],
+            },
+            {
+                "Sid": "SelfAsyncInvoke",
+                "Effect": "Allow",
+                "Action": ["lambda:InvokeFunction"],
+                "Resource": [lambda_arn],
+            },
         ],
     }
 
@@ -1942,7 +2024,7 @@ def create_lambda_harness(harness_arn: str, s3_bucket: str) -> str:
         function_name=lambda_harness_name,
         role_arn=role_arn,
         source_dir=source_dir,
-        description="API Gateway / Function URL proxy to AgentCore Harness",
+        description="Async jobs API + worker proxy to AgentCore Harness",
         handler="lambda_function.handler",
         runtime=lambda_python_runtime,
         timeout=300,
@@ -1956,6 +2038,8 @@ def create_lambda_harness(harness_arn: str, s3_bucket: str) -> str:
             "S3_BUCKET": s3_bucket,
             "SKILLS_S3_PREFIX": SKILLS_S3_PREFIX,
             "DEFAULT_SKILLS": ",".join(DEFAULT_HARNESS_SKILLS),
+            "JOBS_TABLE": jobs_table,
+            "JOB_TTL_SECONDS": str(24 * 3600),
         },
     )
 
@@ -2063,7 +2147,15 @@ def create_api_gateway(lambda_arn: str) -> Dict[str, str]:
         r["RouteKey"]: r["RouteId"]
         for r in (apigatewayv2_client.get_routes(ApiId=api_id).get("Items") or [])
     }
-    for route_key in ("POST /invoke", "GET /health", "OPTIONS /invoke"):
+    for route_key in (
+        "POST /jobs",
+        "GET /jobs/{jobId}",
+        "OPTIONS /jobs",
+        "OPTIONS /jobs/{jobId}",
+        "POST /invoke",
+        "GET /health",
+        "OPTIONS /invoke",
+    ):
         if route_key in existing_routes:
             continue
         try:
@@ -2107,25 +2199,28 @@ def create_api_gateway(lambda_arn: str) -> Dict[str, str]:
         if e.response["Error"]["Code"] != "ResourceConflictException":
             raise
 
+    jobs_url = f"{api_endpoint}/jobs"
     invoke_url = f"{api_endpoint}/invoke"
     health_url = f"{api_endpoint}/health"
-    logger.info(f"✓ API Gateway ready: {invoke_url}")
+    logger.info(f"✓ API Gateway ready: jobs={jobs_url} invoke={invoke_url}")
     logger.info(
-        "  Note: API Gateway integration timeout is ~29s; "
-        "use Lambda Function URL for longer analytics jobs."
+        "  Web uses async POST /jobs + GET /jobs/{jobId} (avoids API GW ~29s limit). "
+        "POST /invoke remains for short sync smoke tests."
     )
     return {
         "api_id": api_id,
         "api_endpoint": api_endpoint,
+        "api_jobs_url": jobs_url,
         "api_invoke_url": invoke_url,
         "api_health_url": health_url,
     }
 
 
 def deploy_harness_stack(s3_bucket: Optional[str] = None) -> Dict[str, str]:
-    """Provision Harness + Lambda + API Gateway + Function URL."""
+    """Provision Harness + jobs table + Lambda + API Gateway + Function URL."""
     target_bucket = s3_bucket or bucket_name or resolve_bucket_name(account_id, region)
     upload_skills_to_s3(target_bucket)
+    jobs_info = create_jobs_table()
     execution_role_arn = create_harness_execution_role(target_bucket)
     code_info = create_or_get_code_interpreter(execution_role_arn)
     harness_info = create_or_get_harness(
@@ -2133,7 +2228,11 @@ def deploy_harness_stack(s3_bucket: Optional[str] = None) -> Dict[str, str]:
         target_bucket,
         code_interpreter_arn=code_info["code_interpreter_arn"],
     )
-    lambda_arn = create_lambda_harness(harness_info["harness_arn"], target_bucket)
+    lambda_arn = create_lambda_harness(
+        harness_info["harness_arn"],
+        target_bucket,
+        jobs_info["jobsTableName"],
+    )
     function_url = create_lambda_function_url(lambda_harness_name)
     api_info = create_api_gateway(lambda_arn)
     skill_uris = [
@@ -2149,8 +2248,12 @@ def deploy_harness_stack(s3_bucket: Optional[str] = None) -> Dict[str, str]:
         "codeInterpreterName": code_info["code_interpreter_name"],
         "lambdaHarnessName": lambda_harness_name,
         "lambdaHarnessArn": lambda_arn,
+        "jobsTableName": jobs_info["jobsTableName"],
+        "jobsTableArn": jobs_info["jobsTableArn"],
         "apiGatewayId": api_info["api_id"],
-        "apiGatewayUrl": api_info["api_invoke_url"],
+        "apiJobsUrl": api_info["api_jobs_url"],
+        "apiGatewayUrl": api_info["api_jobs_url"],
+        "apiGatewayInvokeUrl": api_info["api_invoke_url"],
         "apiGatewayHealthUrl": api_info["api_health_url"],
         "lambdaFunctionUrl": function_url,
         "skillsS3Prefix": f"s3://{target_bucket}/{SKILLS_S3_PREFIX}/",
@@ -2347,25 +2450,44 @@ def create_cloudfront_distribution(s3_bucket_name: str) -> Dict[str, str]:
     return {"id": distribution_id, "domain": distribution_domain}
 
 
+def _derive_api_base(url: str) -> str:
+    """Strip trailing /jobs or /invoke to get API endpoint base."""
+    u = (url or "").rstrip("/")
+    if u.endswith("/jobs"):
+        return u[: -len("/jobs")]
+    if u.endswith("/invoke"):
+        return u[: -len("/invoke")]
+    return u
+
+
 def write_html_config_js(
     api_gateway_url: str,
     api_gateway_health_url: str = "",
+    api_jobs_url: str = "",
 ) -> str:
     """Write html/config.js from deployment config for the static site."""
     os.makedirs(HTML_DIR, exist_ok=True)
     path = os.path.join(HTML_DIR, "config.js")
-    invoke = (api_gateway_url or "").rstrip("/")
-    health = (api_gateway_health_url or "").rstrip("/")
-    if invoke and not health:
-        health = (
-            invoke[: -len("/invoke")] + "/health"
-            if invoke.endswith("/invoke")
-            else f"{invoke}/health"
-        )
+    prior = load_config_json()
+    jobs = (api_jobs_url or prior.get("apiJobsUrl") or api_gateway_url or "").rstrip(
+        "/"
+    )
+    # Prefer /jobs for the demo web; accept legacy /invoke and rewrite.
+    if jobs.endswith("/invoke"):
+        jobs = jobs[: -len("/invoke")] + "/jobs"
+    if jobs and not jobs.endswith("/jobs"):
+        base = _derive_api_base(jobs)
+        jobs = f"{base}/jobs" if base else jobs
+    health = (api_gateway_health_url or prior.get("apiGatewayHealthUrl") or "").rstrip(
+        "/"
+    )
+    if not health and jobs:
+        health = f"{_derive_api_base(jobs)}/health"
     content = (
         "// Generated by installer.py — do not edit by hand for deploy.\n"
         "window.APP_CONFIG = {\n"
-        f"  apiGatewayUrl: {json.dumps(invoke)},\n"
+        f"  apiJobsUrl: {json.dumps(jobs)},\n"
+        f"  apiGatewayUrl: {json.dumps(jobs)},\n"
         f"  apiGatewayHealthUrl: {json.dumps(health)},\n"
         f"  projectName: {json.dumps(project_name)},\n"
         '  companyName: "센터교통정보",\n'
@@ -2381,13 +2503,14 @@ def upload_web_to_s3(
     s3_bucket_name: str,
     api_gateway_url: str,
     api_gateway_health_url: str = "",
+    api_jobs_url: str = "",
 ) -> int:
     """Upload html/ assets (including images/) to s3://{bucket}/web/."""
     logger.info(f"Uploading html/ → s3://{s3_bucket_name}/{WEB_S3_PREFIX}/")
     if not os.path.isdir(HTML_DIR):
         raise FileNotFoundError(f"Missing HTML directory: {HTML_DIR}")
 
-    write_html_config_js(api_gateway_url, api_gateway_health_url)
+    write_html_config_js(api_gateway_url, api_gateway_health_url, api_jobs_url)
     uploaded = 0
     skip_names = {"generate_images.py", "manifest.json"}
     for root, dirs, files in os.walk(HTML_DIR):
@@ -2452,6 +2575,7 @@ def deploy_web_stack(
     s3_bucket_name: str,
     api_gateway_url: str = "",
     api_gateway_health_url: str = "",
+    api_jobs_url: str = "",
 ) -> Dict[str, str]:
     """Ensure CloudFront + upload html/ and return config fields."""
     discovered = discover_web_resources()
@@ -2460,7 +2584,13 @@ def deploy_web_stack(
         raise RuntimeError("S3 bucket name is required for web deploy")
 
     prior = load_config_json()
-    invoke = api_gateway_url or prior.get("apiGatewayUrl") or ""
+    jobs = (
+        api_jobs_url
+        or prior.get("apiJobsUrl")
+        or api_gateway_url
+        or prior.get("apiGatewayUrl")
+        or ""
+    )
     health = (
         api_gateway_health_url
         or prior.get("apiGatewayHealthUrl")
@@ -2468,7 +2598,7 @@ def deploy_web_stack(
     )
 
     cf = create_cloudfront_distribution(target_bucket)
-    upload_web_to_s3(target_bucket, invoke, health)
+    upload_web_to_s3(target_bucket, jobs, health, api_jobs_url=jobs)
     invalidate_cloudfront(cf["id"])
 
     return {
@@ -2699,10 +2829,25 @@ def main():
 
         web_config: Dict[str, str] = {}
         if not args.skip_web:
-            api_url = config_payload.get("apiGatewayUrl") or load_config_json().get(
-                "apiGatewayUrl", ""
+            prior_cfg = load_config_json()
+            jobs_url = (
+                config_payload.get("apiJobsUrl")
+                or prior_cfg.get("apiJobsUrl")
+                or config_payload.get("apiGatewayUrl")
+                or prior_cfg.get("apiGatewayUrl")
+                or ""
             )
-            web_config = deploy_web_stack(s3_info["bucket_name"], api_url)
+            health_url = (
+                config_payload.get("apiGatewayHealthUrl")
+                or prior_cfg.get("apiGatewayHealthUrl")
+                or ""
+            )
+            web_config = deploy_web_stack(
+                s3_info["bucket_name"],
+                api_gateway_url=jobs_url,
+                api_gateway_health_url=health_url,
+                api_jobs_url=jobs_url,
+            )
             config_payload.update(web_config)
         else:
             logger.warning("Skipping CloudFront / web upload (--skip-web)")
@@ -2723,12 +2868,18 @@ def main():
             logger.info(
                 f"  Lambda Harness ARN: {harness_config.get('lambdaHarnessArn')}"
             )
-            logger.info(f"  API Gateway URL: {harness_config.get('apiGatewayUrl')}")
+            logger.info(f"  API Jobs URL: {harness_config.get('apiJobsUrl')}")
+            logger.info(
+                f"  API Invoke URL (sync/short): "
+                f"{harness_config.get('apiGatewayInvokeUrl')}"
+            )
+            logger.info(f"  Jobs table: {harness_config.get('jobsTableName')}")
             logger.info(
                 f"  Lambda Function URL: {harness_config.get('lambdaFunctionUrl')}"
             )
             logger.info(
-                "  Tip: API GW ~29s limit — use Function URL (IAM) for long jobs"
+                "  Tip: Web uses async POST /jobs + poll GET /jobs/{jobId} "
+                "(avoids API GW ~29s limit)"
             )
         if web_config:
             logger.info(f"  Website URL: {web_config.get('websiteUrl')}")

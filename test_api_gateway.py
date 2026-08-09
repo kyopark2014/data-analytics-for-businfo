@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""API Gateway → Lambda → Harness smoke test using config.json."""
+"""API Gateway → async jobs → Lambda worker → Harness smoke test."""
 
 from __future__ import annotations
 
 import json
 import os
 import sys
+import time
 import uuid
 import urllib.error
 import urllib.request
@@ -17,6 +18,8 @@ from botocore.exceptions import ClientError
 working_dir = os.path.dirname(os.path.abspath(__file__))
 _config_path = os.path.join(working_dir, "config.json")
 API_NAME = "api-harness-businfo"
+POLL_INTERVAL_S = 2.0
+POLL_MAX_S = 300.0
 
 
 def load_config(path: str) -> Dict[str, Any]:
@@ -61,23 +64,46 @@ def _find_http_api(region: str, api_name: str, api_id: str = "") -> Optional[Dic
     return None
 
 
+def _base_from_url(url: str) -> str:
+    u = (url or "").rstrip("/")
+    for suffix in ("/jobs", "/invoke", "/health"):
+        if u.endswith(suffix):
+            return u[: -len(suffix)]
+    return u
+
+
 def resolve_api_urls(
     cfg: Dict[str, Any], region: str
-) -> Tuple[str, str, Dict[str, Any]]:
-    """Resolve invoke/health URLs from config.json, refreshing when possible."""
+) -> Tuple[str, str, str, Dict[str, Any]]:
+    """Resolve jobs/health/invoke URLs from config.json."""
     updates: Dict[str, Any] = {}
-    invoke_url = (cfg.get("apiGatewayUrl") or "").strip().rstrip("/")
+    jobs_url = (cfg.get("apiJobsUrl") or cfg.get("apiGatewayUrl") or "").strip().rstrip(
+        "/"
+    )
     health_url = (cfg.get("apiGatewayHealthUrl") or "").strip().rstrip("/")
+    invoke_url = (cfg.get("apiGatewayInvokeUrl") or "").strip().rstrip("/")
 
-    if invoke_url and not health_url:
-        if invoke_url.endswith("/invoke"):
-            health_url = invoke_url[: -len("/invoke")] + "/health"
-        else:
-            health_url = invoke_url.rstrip("/") + "/health"
+    if jobs_url.endswith("/invoke"):
+        jobs_url = jobs_url[: -len("/invoke")] + "/jobs"
+        updates["apiJobsUrl"] = jobs_url
+        updates["apiGatewayUrl"] = jobs_url
+
+    if jobs_url and not jobs_url.endswith("/jobs"):
+        base = _base_from_url(jobs_url)
+        jobs_url = f"{base}/jobs"
+        updates["apiJobsUrl"] = jobs_url
+        updates["apiGatewayUrl"] = jobs_url
+
+    if jobs_url and not health_url:
+        health_url = _base_from_url(jobs_url) + "/health"
         updates["apiGatewayHealthUrl"] = health_url
 
-    if invoke_url:
-        return invoke_url, health_url, updates
+    if jobs_url and not invoke_url:
+        invoke_url = _base_from_url(jobs_url) + "/invoke"
+        updates["apiGatewayInvokeUrl"] = invoke_url
+
+    if jobs_url:
+        return jobs_url, health_url, invoke_url, updates
 
     found = _find_http_api(
         region,
@@ -86,7 +112,7 @@ def resolve_api_urls(
     )
     if not found:
         raise SystemExit(
-            f"apiGatewayUrl not found in {_config_path} "
+            f"apiJobsUrl not found in {_config_path} "
             f"(looked for HTTP API name={API_NAME!r}).\n"
             "Deploy first:\n"
             "  python installer.py --harness-only\n"
@@ -94,23 +120,26 @@ def resolve_api_urls(
         )
 
     endpoint = found["api_endpoint"].rstrip("/")
-    invoke_url = f"{endpoint}/invoke"
+    jobs_url = f"{endpoint}/jobs"
     health_url = f"{endpoint}/health"
+    invoke_url = f"{endpoint}/invoke"
     updates.update(
         {
             "apiGatewayId": found["api_id"],
-            "apiGatewayUrl": invoke_url,
+            "apiJobsUrl": jobs_url,
+            "apiGatewayUrl": jobs_url,
             "apiGatewayHealthUrl": health_url,
+            "apiGatewayInvokeUrl": invoke_url,
         }
     )
-    return invoke_url, health_url, updates
+    return jobs_url, health_url, invoke_url, updates
 
 
 def http_json(
     method: str,
     url: str,
     body: Optional[Dict[str, Any]] = None,
-    timeout: float = 90.0,
+    timeout: float = 30.0,
 ) -> Tuple[int, Dict[str, Any], str]:
     data = None
     headers = {"Accept": "application/json"}
@@ -142,7 +171,7 @@ def main() -> int:
     cfg = load_config(_config_path)
     region = cfg.get("region") or os.environ.get("AWS_REGION") or "us-west-2"
 
-    invoke_url, health_url, updates = resolve_api_urls(cfg, region)
+    jobs_url, health_url, invoke_url, updates = resolve_api_urls(cfg, region)
     if updates:
         cfg.update(updates)
         save_config(_config_path, cfg)
@@ -157,11 +186,9 @@ def main() -> int:
         "RUNTIME_SESSION_ID",
         "1234abcd-12ab-34cd-56ef-1234567890ab",
     )
-    # Lambda recommends runtimeSessionId length >= 33
     if len(session_id) < 33:
         session_id = f"{session_id}-{uuid.uuid4()}"
 
-    # Lambda DEFAULT_SKILLS=businfo attaches S3 skill; optional override via env.
     skills_override = os.environ.get("SKILLS", "").strip()
     skills_payload: Optional[Any] = None
     if skills_override:
@@ -170,8 +197,10 @@ def main() -> int:
     print(f"config={_config_path}")
     print(f"region={region}")
     print(f"projectName={cfg.get('projectName', '')}")
-    print(f"apiGatewayUrl={invoke_url}")
+    print(f"apiJobsUrl={jobs_url}")
     print(f"apiGatewayHealthUrl={health_url}")
+    print(f"apiGatewayInvokeUrl={invoke_url}")
+    print(f"jobsTableName={cfg.get('jobsTableName', '')}")
     print(f"lambdaHarnessArn={cfg.get('lambdaHarnessArn', '')}")
     print(f"HARNESS_ARN={cfg.get('HARNESS_ARN', '')}")
     print(f"defaultSkills={cfg.get('defaultSkills', 'businfo')}")
@@ -182,55 +211,69 @@ def main() -> int:
         print(f"skillsOverride={skills_payload}")
     print("---", flush=True)
 
-    # 1) Health
-    print("[1/2] GET /health", flush=True)
+    print("[1/3] GET /health", flush=True)
     status, health_body, _ = http_json("GET", health_url, timeout=15.0)
     print(f"status={status}")
     print(json.dumps(health_body, ensure_ascii=False, indent=2))
-    if status != 200 or not health_body.get("status") == "ok":
-        if status != 200:
-            raise SystemExit(f"Health check failed with HTTP {status}")
+    if status != 200 or health_body.get("status") != "ok":
+        raise SystemExit(f"Health check failed with HTTP {status}")
     if not health_body.get("harnessConfigured", True):
         print(
-            "warning: Lambda reports harnessConfigured=false "
-            "(HARNESS_ARN env may be missing)",
+            "warning: Lambda reports harnessConfigured=false",
             file=sys.stderr,
         )
-    if not health_body.get("skillsConfigured", True):
+    if not health_body.get("jobsTableConfigured", True):
         print(
-            "warning: Lambda reports skillsConfigured=false "
-            "(S3_BUCKET / DEFAULT_SKILLS env may be missing)",
+            "warning: Lambda reports jobsTableConfigured=false "
+            "(redeploy with installer.py --harness-only)",
             file=sys.stderr,
         )
     print("---", flush=True)
 
-    # 2) Invoke via API Gateway → Lambda → Harness (businfo skill attached)
-    print("[2/2] POST /invoke  (API Gateway → Lambda → Harness + businfo skill)", flush=True)
-    invoke_body: Dict[str, Any] = {"prompt": prompt, "sessionId": session_id}
+    print("[2/3] POST /jobs  (create async job)", flush=True)
+    create_body: Dict[str, Any] = {"prompt": prompt, "sessionId": session_id}
     if skills_payload is not None:
-        invoke_body["skills"] = skills_payload
-    # API GW integration timeout ~29s; allow a little headroom on the client.
-    status, body, raw = http_json(
-        "POST",
-        invoke_url,
-        body=invoke_body,
-        timeout=35.0,
-    )
+        create_body["skills"] = skills_payload
+    status, body, raw = http_json("POST", jobs_url, body=create_body, timeout=30.0)
     print(f"status={status}", flush=True)
-    if status != 200:
+    if status not in (200, 202):
         print(raw)
-        raise SystemExit(f"Invoke failed with HTTP {status}")
+        raise SystemExit(f"Create job failed with HTTP {status}")
+    job_id = body.get("jobId")
+    if not job_id:
+        print(raw)
+        raise SystemExit("Create job response missing jobId")
+    print(json.dumps(body, ensure_ascii=False, indent=2), flush=True)
+    print("---", flush=True)
 
-    result = body.get("result")
-    returned_session = body.get("sessionId") or session_id
-    if result is None and body.get("error"):
-        raise SystemExit(f"Invoke error: {body.get('error')}")
+    poll_url = f"{jobs_url.rstrip('/')}/{job_id}"
+    print(f"[3/3] GET {poll_url}  (poll until SUCCEEDED/FAILED)", flush=True)
+    deadline = time.time() + POLL_MAX_S
+    final: Dict[str, Any] = {}
+    while time.time() < deadline:
+        status, final, raw = http_json("GET", poll_url, timeout=30.0)
+        if status != 200:
+            print(raw)
+            raise SystemExit(f"Poll failed with HTTP {status}")
+        job_status = final.get("status")
+        print(f"  status={job_status}", flush=True)
+        if job_status in ("SUCCEEDED", "FAILED"):
+            break
+        time.sleep(POLL_INTERVAL_S)
+    else:
+        raise SystemExit(f"Timed out waiting for job {job_id} after {POLL_MAX_S:.0f}s")
 
+    if final.get("status") == "FAILED":
+        raise SystemExit(f"Job failed: {final.get('error')}")
+
+    result = final.get("result")
+    returned_session = final.get("sessionId") or session_id
     print(result if result is not None else raw)
     print(flush=True)
+    print(f"[jobId: {job_id}]")
     print(f"[sessionId: {returned_session}]")
-    if body.get("skills"):
-        print(f"[skills: {json.dumps(body.get('skills'), ensure_ascii=False)}]")
+    if final.get("skills"):
+        print(f"[skills: {json.dumps(final.get('skills'), ensure_ascii=False)}]")
     return 0
 
 
