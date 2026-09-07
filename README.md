@@ -490,3 +490,7 @@ Centerfield 버스정류장에서 1분단위로 데이터 수집하였다면, ti
 CloudFront 도메인에 접속후 아래와 같이 "지난 1시간 동안 도착한 버스 정보를 알려주세요."로 질문하면, Amazon S3에 수집된 버스 정보를 바탕으로 아래와 같은 답변을 얻을 수 있습니다.
 
 <img width="1112" height="835" alt="image" src="https://github.com/user-attachments/assets/dd12ba38-818c-4f06-b45d-94c71a149739" />
+
+"하루중 가장 혼잡도가 높은 시간을 지난 2주간의 데이터를 기준으로 설명하세요." 와 같이 분석 요청시 아래와 같은 결과를 얻을 수 있습니다.
+
+<img width="1100" height="759" alt="image" src="https://github.com/user-attachments/assets/18da9f25-3c67-4f72-8aab-417b065eb945" />
